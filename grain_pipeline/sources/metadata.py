@@ -1,5 +1,4 @@
-"""Consulta  de metadatos e identificación de las cuatro series.
-"""
+"""Consulta pequeña y validación de contratos de metadatos de las cuatro series"""
 
 import argparse
 from pathlib import Path
@@ -10,13 +9,15 @@ import requests
 from grain_pipeline.clients.http import request_json
 from grain_pipeline.common.config import load_credentials
 from grain_pipeline.sources.catalog import SERIES
+from grain_pipeline.sources.contracts import validate_metadata
 
 
 def fetch_metadata(session: requests.Session, series: dict, credentials: dict) -> dict:
-    """Consulta una serie y comprueba que el identificador recibido sea el esperado."""
+    """Consulta una serie y delega en su contrato la validación del contenido."""
     provider = series["provider"]
     code = series["code"]
 
+    # Este módulo decide el endpoint y los parámetros de negocio.
     if provider == "FRED":
         path = "series"
         params = {"series_id": code, "file_type": "json"}
@@ -27,24 +28,7 @@ def fetch_metadata(session: requests.Session, series: dict, credentials: dict) -
         raise ValueError("Proveedor de metadatos no soportado.")
 
     payload = request_json(session, provider, path, params, credentials)
-    if any(name in payload for name in ("error", "error_code", "error_message")):
-        raise ValueError(f"{provider} {code}: la fuente devolvió un error.")
-
-    if provider == "FRED":
-        records = payload.get("seriess")
-        identifier_field = "id"
-    else:
-        bmx = payload.get("bmx")
-        records = bmx.get("series") if isinstance(bmx, dict) and "error" not in bmx else None
-        identifier_field = "idSerie"
-
-    # Consultamos una sola serie por petición, por lo que esperamos un registro.
-    if not isinstance(records, list) or len(records) != 1:
-        raise ValueError(f"{provider} {code}: estructura de metadatos inesperada.")
-    record = records[0]
-    if not isinstance(record, dict) or record.get(identifier_field) != code:
-        raise ValueError(f"{provider} {code}: identificador recibido incompatible.")
-    return record
+    return validate_metadata(payload, series)
 
 
 def main(argv=None) -> int:
@@ -58,7 +42,8 @@ def main(argv=None) -> int:
         with requests.Session() as session:
             for series in SERIES:
                 fetch_metadata(session, series, credentials)
-                print(f"{series['provider']} | {series['code']} | metadatos recibidos e identificador comprobado")
+                # La salida se construye con identificadores públicos del catálogo.
+                print(f"{series['provider']} | {series['code']} | identidad, título, unidad y frecuencia comprobados")
     except (ValueError, RuntimeError) as error:
         print(str(error), file=sys.stderr)
         return 1

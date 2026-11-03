@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 from grain_pipeline.sources.catalog import SERIES
 from grain_pipeline.sources.metadata import fetch_metadata
+from tests.fixtures import metadata_payload, metadata_record
 
 
 CREDENTIALS = {"FRED_API_KEY": "fixture-fred-key", "BANXICO_TOKEN": "fixture-banxico-token"}
@@ -16,11 +17,12 @@ class MetadataTests(unittest.TestCase):
     def test_fred_endpoint_and_identifier(self):
         series = SERIES[0]
         session = Mock()
-        record = {"id": series["code"], "title": "Fixture corn"}
+        # El registro ficticio ahora incluye los campos exigidos por el contrato.
+        record = metadata_record(series)
         # Sustituimos la referencia a request_json que utiliza este módulo.
         # La función fetch_metadata sigue ejecutándose realmente.
         with patch("grain_pipeline.sources.metadata.request_json",
-                   return_value={"seriess": [record]}) as request:
+                   return_value=metadata_payload(series, record)) as request:
             result = fetch_metadata(session, series, CREDENTIALS)
 
         self.assertEqual(result, record)
@@ -30,9 +32,9 @@ class MetadataTests(unittest.TestCase):
     def test_banxico_endpoint_and_identifier(self):
         series = SERIES[3]
         session = Mock()
-        record = {"idSerie": series["code"], "titulo": "Fixture FIX"}
+        record = metadata_record(series)
         with patch("grain_pipeline.sources.metadata.request_json",
-                   return_value={"bmx": {"series": [record]}}) as request:
+                   return_value=metadata_payload(series, record)) as request:
             result = fetch_metadata(session, series, CREDENTIALS)
 
         self.assertEqual(result, record)
