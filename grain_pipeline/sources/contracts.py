@@ -4,6 +4,8 @@ Estas funciones reciben diccionarios y comprueban su contenido. Sus entradas
 pueden proceder del cliente HTTP o de un escenario de prueba preparado.
 """
 
+from datetime import date
+from grain_pipeline.common.dates import parse_date
 
 def normalize_text(value) -> str:
     """Prepara texto para comparar espacios y mayúsculas sin alterar el original."""
@@ -45,6 +47,34 @@ def read_series_record(payload: dict, series: dict) -> dict:
     return record
 
 
+def read_metadata_range(record: dict, series: dict) -> tuple[date, date]:
+    """Lee el inicio y fin declarados por el proveedor como objetos date."""
+    provider = series["provider"]
+    code = series["code"]
+    if provider == "FRED":
+        start_field, end_field = "observation_start", "observation_end"
+        iso = True
+    elif provider == "Banxico":
+        start_field, end_field = "fechaInicio", "fechaFin"
+        iso = False
+    else:
+        raise ValueError("Proveedor de metadatos no soportado.")
+
+    try:
+        # El proveedor determina el formato; el helper común interpreta la fecha.
+        start = parse_date(record.get(start_field), iso=iso)
+        end = parse_date(record.get(end_field), iso=iso)
+    except ValueError:
+        raise ValueError(f"{provider} {code}: formato o fecha de disponibilidad inválidos.") from None
+
+    if start > end:
+        raise ValueError(f"{provider} {code}: rango de disponibilidad invertido.")
+    # En nuestras series mensuales, el primer día identifica el periodo del mes.
+    if provider == "FRED" and (start.day != 1 or end.day != 1):
+        raise ValueError(f"{provider} {code}: fechas de periodo mensual incompatibles.")
+    return start, end
+
+
 def validate_metadata(payload: dict, series: dict) -> dict:
     """Comprueba identidad, título y campos requeridos; devuelve el registro original."""
     record = read_series_record(payload, series)
@@ -67,5 +97,8 @@ def validate_metadata(payload: dict, series: dict) -> dict:
         title_matches = expected_title in received_title
     if not title_matches:
         raise ValueError(f"{provider} {code}: metadato {title_field} incompatible.")
+
+    # Exige un rango de fechas interpretable y ordenado.
+    read_metadata_range(record, series)
 
     return record

@@ -2,8 +2,9 @@
 
 import unittest
 
+from datetime import date
 from grain_pipeline.sources.catalog import SERIES
-from grain_pipeline.sources.contracts import validate_metadata
+from grain_pipeline.sources.contracts import read_metadata_range, validate_metadata
 from tests.fixtures import metadata_payload, metadata_record
 
 
@@ -98,3 +99,40 @@ class MetadataContractTests(unittest.TestCase):
                 record[field] = value
                 with self.assertRaises(ValueError):
                     validate_metadata(metadata_payload(series, record), series)
+
+    def test_date_ranges_are_read_for_both_providers(self):
+        self.assertEqual(read_metadata_range(metadata_record(SERIES[0]), SERIES[0]),
+                         (date(2010, 1, 1), date(2026, 9, 1)))
+        self.assertEqual(read_metadata_range(metadata_record(SERIES[3]), SERIES[3]),
+                         (date(2010, 1, 1), date(2026, 10, 30)))
+
+    def test_missing_or_invalid_date_values_are_rejected(self):
+        cases = ((SERIES[0], "observation_end", None),
+                 (SERIES[0], "observation_end", "2026-02-29"),
+                 (SERIES[3], "fechaFin", "2026-10-30"),
+                 (SERIES[3], "fechaInicio", "31/02/2026"))
+        for series, field, value in cases:
+            with self.subTest(code=series["code"], field=field, value=value):
+                record = metadata_record(series)
+                record[field] = value
+                with self.assertRaises(ValueError):
+                    validate_metadata(metadata_payload(series, record), series)
+
+    def test_reversed_date_ranges_are_rejected(self):
+        cases = ((SERIES[0], "observation_start", "2026-10-01"),
+                 (SERIES[3], "fechaInicio", "01/11/2026"))
+        for series, field, value in cases:
+            with self.subTest(code=series["code"]):
+                record = metadata_record(series)
+                record[field] = value
+                with self.assertRaises(ValueError):
+                    validate_metadata(metadata_payload(series, record), series)
+
+    def test_monthly_range_dates_must_identify_month_start(self):
+        for field, value in (("observation_start", "2010-01-02"),
+                             ("observation_end", "2026-09-15")):
+            with self.subTest(field=field):
+                record = metadata_record(SERIES[0])
+                record[field] = value
+                with self.assertRaises(ValueError):
+                    validate_metadata(metadata_payload(SERIES[0], record), SERIES[0])

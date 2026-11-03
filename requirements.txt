@@ -1,2 +1,4 @@
 requests==2.34.2
 python-dotenv==1.2.4
+# Datos IANA para que zoneinfo pueda utilizar America/Mexico_City en Windows.
+tzdata==2026.6
