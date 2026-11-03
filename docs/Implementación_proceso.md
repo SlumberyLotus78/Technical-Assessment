@@ -8,6 +8,9 @@ El proyecto integra precios internacionales de maíz, trigo y soya de FRED con e
 
 Se completó la preparación del entorno, la conexión autenticada a las fuentes, la validación de sus metadatos y la extracción de una muestra con conservación de respuestas y perfil de calidad. La muestra contiene 30 observaciones y completó las reglas implementadas sin incidencias. La cobertura diaria de FIX permanece pendiente de validación con el calendario bancario.
 
+Sobre esa evidencia se definieron el modelo de persistencia, el diccionario de campos y el catálogo de reglas para las cargas. El diseño incluye la procedencia de observaciones, los agregados y referencias mensuales, el registro de intentos y el avance publicado hasta Gold. Su materialización en PostgreSQL corresponde al siguiente entregable.
+
+
 Este documento registra el avance de implementación y sus verificaciones. El detalle cuantitativo se presenta en el [perfilamiento inicial](Perfilamiento_inicial.md).
 
 ## 2. Avance registrado
@@ -21,8 +24,9 @@ Este documento registra el avance de implementación y sus verificaciones. El de
 | Comunicación | Cliente HTTP autenticado y consulta de metadatos de las cuatro series. | `36d4934b` |
 | Contratos | Validación de estructura, identidad, título, unidad, frecuencia y clasificación de las fuentes. | `c19019c1` |
 | Selección temporal | Interpretación de fechas, disponibilidad declarada y ventanas para un mes cerrado común. | `66385444` |
-| Extracción y perfil | Consulta de observaciones, captura por ejecución y controles de fechas, valores, duplicados y cobertura mensual. | Cambios actuales, pendientes de commit. |
-| Evidencia inicial | Revisión de la muestra real, reproducción del perfil y conservación de las capturas que sustentan sus resultados. | Documentación incluida en el avance actual. |
+| Extracción y perfil | Consulta de observaciones, captura por ejecución y controles de fechas, valores, duplicados y cobertura mensual. | `de1fb9d2` |
+| Evidencia inicial | Revisión de la muestra real, reproducción del perfil y conservación de las capturas que sustentan sus resultados. | `de1fb9d2` |
+| Modelo y calidad | Diseño de ocho entidades, diccionario de campos y reglas de publicación para histórico e incremental independientes. | Avance documental actual, pendiente de commit. |
 
 ## 3. Organización de la implementación
 
@@ -38,6 +42,8 @@ El código se distribuye por responsabilidad mediante funciones y paquetes, dond
 | `tests/` | Casos simulados de configuración, comunicación, contratos, fechas, captura y calidad. |
 
 El flujo implementado consulta los metadatos, determina las ventanas, solicita las observaciones, conserva el JSON recibido y aplica el contrato y las reglas de perfil. Los números se interpretan directamente desde texto con `Decimal`, manteniendo la precisión disponible en las fuentes.
+
+El [modelo de datos](MODELO_DATOS_ES.md), el [diccionario](DICCIONARIO_DATOS_ES.md) y el [catálogo DQ](REGLAS_CALIDAD_ES.md) especifican las responsabilidades de persistencia y transformación que se incorporarán a estos paquetes. Los documentos distinguen las reglas de exploración ya ejecutadas de las garantías de carga y publicación pendientes.
 
 ## 4. Captura y trazabilidad
 
@@ -62,6 +68,7 @@ Las capturas operativas permanecen excluidas de Git. La copia seleccionada para 
 | Calidad observada | Cero ausentes, formatos inválidos, valores no positivos, fechas incompatibles, fechas fuera de ventana y duplicados. |
 | Cobertura mensual | Tres meses esperados y tres meses con valores utilizables en cada grano. |
 | Cobertura diaria | Pendiente del calendario hábil bancario; el conteo de 21 registros no acredita por sí solo la integridad del mes FIX. |
+| Revisión de diseño | Definición de claves, tipos, relaciones, procedencia, reglas DQ y límite transaccional de la futura publicación. La comprobación del avance documental incluye enlaces y consistencia con la evidencia. |
 
 Las pruebas simuladas verifican el comportamiento del código mientras que la muestra real aporta evidencia sobre los registros efectivamente recibidos. Ambas verificaciones tienen alcances distintos y se documentan por separado.
 
@@ -70,18 +77,18 @@ Las pruebas simuladas verifican el comportamiento del código mientras que la mu
 | Frente | Estado al corte |
 |---|---|
 | Bronze | Captura local de muestras implementada y comprobada con respuestas reales. |
-| Silver | Pendiente de definir el modelo y la preparación persistente de observaciones validadas. |
-| Gold | Pendiente de agregación mensual del FIX e integración de referencias e indicadores. |
-| Carga histórica | Pendiente de definir el periodo y construir su recorrido hasta Gold. |
-| Carga incremental | Prevista como proceso independiente, apoyado en el estado establecido por la carga histórica. |
-| Persistencia y control | Pendientes de implementación en esta rama: almacenamiento en PostgreSQL, logs y watermarks. |
+| Silver | Modelo definido: catálogo y una observación vigente por proveedor, serie y fecha. Persistencia pendiente. |
+| Gold | Definidas la media FIX certificada, las referencias MXN/t y las variaciones mensual y anual. Transformaciones pendientes. |
+| Carga histórica | Contrato de inicialización y publicación definido; periodo y proceso pendientes. |
+| Carga incremental | Contrato independiente definido, con requisito de histórico inicializado y revisión de periodos anteriores. Implementación pendiente. |
+| Persistencia y control | Definidos registros de ejecuciones, capturas, DQ y watermark común al producto. SQL y conexión pendientes en esta rama. |
 | Visualización y automatización | Pendientes del modelo analítico, el paquete instalable y la programación del incremental. |
 
 La extracción de muestra es un diagnóstico de fuentes. Su terminación acredita ese recorrido y sus reglas actuales y la publicación de datos y el avance de watermarks corresponden a las futuras cargas.
 
 ## 7. Continuidad prevista
 
-Los siguientes entregables serán el modelo de datos, el diccionario de campos y las reglas de validación para la carga histórica. La cobertura FIX requerirá el calendario bancario y el perfil del periodo completo seleccionado.
+El siguiente entregable será la creación SQL de esquemas, tablas y restricciones, seguida de la configuración y comprobación de conexión. La cobertura FIX requerirá después el calendario bancario y el perfil del periodo completo seleccionado antes de publicar un agregado.
 
 La carga histórica establecerá la base inicial hasta Gold y las cargas incrementales se implementará después como proceso independiente, compartiendo reglas y transformaciones, con control de reejecuciones y actualización de watermarks tras una publicación satisfactoria. La visualización y el empaquetado para automatización se incorporarán sobre esa base.
 
