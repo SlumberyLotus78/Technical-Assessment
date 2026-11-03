@@ -5,6 +5,8 @@ import calendar
 from datetime import date, datetime
 import re
 
+# Metadatos y extracción utilizan la misma zona para decidir qué mes está cerrado.
+OPERATING_TIMEZONE = "America/Mexico_City"
 
 def parse_date(value, *, iso: bool = True) -> date:
     """Lee YYYY-MM-DD o, con iso=False, DD/MM/YYYY y devuelve una fecha válida."""

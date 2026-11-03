@@ -1,0 +1,18 @@
+{
+  "provider": "Banxico",
+  "series_code": "SF43718",
+  "kind": "metadata",
+  "captured_at_utc": "2026-11-03T21:55:25.203645+00:00",
+  "window_start": null,
+  "window_end": null,
+  "payload": {
+    "idSerie": "SF43718",
+    "titulo": "Tipo de cambio                                          Pesos por dólar E.U.A. Tipo de cambio para solventar obligaciones denominadas en moneda extranjera Fecha de determinación (FIX)",
+    "fechaInicio": "12/11/1991",
+    "fechaFin": "03/11/2026",
+    "periodicidad": "Diaria",
+    "cifra": "Tipo de Cambio",
+    "unidad": "Pesos por Dólar",
+    "versionada": false
+  }
+}

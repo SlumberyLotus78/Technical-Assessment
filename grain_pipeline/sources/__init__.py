@@ -3,4 +3,6 @@
 Este archivo identifica sources como paquete regular. Dentro de él,
 catalog.py define las series que utilizarán los demás componentes.
 contracts.py comprueba los metadatos y metadata.py coordina su consulta.
+observations.py consulta observaciones e interpreta sus campos de origen.
+
 """

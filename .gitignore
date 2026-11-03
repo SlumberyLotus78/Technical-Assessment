@@ -1,9 +1,13 @@
+# Basicas del repositorio
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
 .venv/
 *.py[cod]
+
+# Capturas y reportes locales: se generan al ejecutar los diagnósticos.
+data/
 
 # C extensions
 *.so

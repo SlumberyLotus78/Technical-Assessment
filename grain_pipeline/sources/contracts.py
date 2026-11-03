@@ -15,11 +15,11 @@ def normalize_text(value) -> str:
 
 
 def read_series_record(payload: dict, series: dict) -> dict:
-    """Obtiene un registro y comprueba la estructura y el identificador de serie."""
+    """Lee una serie de metadatos o de la envoltura de observaciones Banxico."""
     provider = series["provider"]
     code = series["code"]
     if not isinstance(payload, dict):
-        raise ValueError(f"{provider} {code}: la raíz de metadatos debe ser un objeto.")
+        raise ValueError(f"{provider} {code}: la raíz de la respuesta debe ser un objeto.")
     # Un JSON con un error declarado tampoco satisface el contrato.
     if any(name in payload for name in ("error", "error_code", "error_message")):
         raise ValueError(f"{provider} {code}: la fuente devolvió un error.")
@@ -36,12 +36,12 @@ def read_series_record(payload: dict, series: dict) -> dict:
     else:
         raise ValueError("Proveedor de metadatos no soportado.")
 
-    # Cada petición del diagnóstico consulta exactamente una serie.
+    # Cada petición del diagnóstico consulta exactamente una serie. Banxico utiliza esta misma envoltura al consultar metadatos y observaciones.
     if not isinstance(records, list) or len(records) != 1:
-        raise ValueError(f"{provider} {code}: estructura de metadatos inesperada.")
+        raise ValueError(f"{provider} {code}: estructura de serie inesperada.")
     record = records[0]
     if not isinstance(record, dict) or "error" in record:
-        raise ValueError(f"{provider} {code}: registro de metadatos incompatible.")
+        raise ValueError(f"{provider} {code}: registro de serie incompatible.")
     if record.get(identifier_field) != code:
         raise ValueError(f"{provider} {code}: identificador recibido incompatible.")
     return record
@@ -94,11 +94,12 @@ def validate_metadata(payload: dict, series: dict) -> dict:
         title_matches = received_title == expected_title
     else:
         # El título jerárquico de Banxico puede incluir contexto adicional.
+        # Comprobamos que contenga el componente de determinación FIX esperado.
         title_matches = expected_title in received_title
     if not title_matches:
         raise ValueError(f"{provider} {code}: metadato {title_field} incompatible.")
 
-    # Exige un rango de fechas interpretable y ordenado.
+    # También exigimos un rango de fechas interpretable y ordenado.
     read_metadata_range(record, series)
 
     return record

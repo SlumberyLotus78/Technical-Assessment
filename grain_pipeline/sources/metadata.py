@@ -10,14 +10,10 @@ import requests
 
 from grain_pipeline.clients.http import request_json
 from grain_pipeline.common.config import load_credentials
-from grain_pipeline.common.dates import parse_month
+from grain_pipeline.common.dates import OPERATING_TIMEZONE, parse_month
 from grain_pipeline.sources.catalog import SERIES
 from grain_pipeline.sources.contracts import read_metadata_range, validate_metadata
 from grain_pipeline.sources.sampling import sample_window, select_sample_month
-
-
-# La fecha de operación se calculará en esta zona, independientemente de la del equipo.
-OPERATING_TIMEZONE = "America/Mexico_City"
 
 
 def fetch_metadata(session: requests.Session, series: dict, credentials: dict) -> dict:

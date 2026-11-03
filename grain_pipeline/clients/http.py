@@ -46,8 +46,7 @@ def request_json(session: requests.Session, provider: str, path: str,
         raise RuntimeError(f"{provider}: fallo de conexión ({type(error).__name__}).") from None
 
     try:
-        # Estos endpoints de metadatos deben responder HTTP 200.
-        # El cuerpo de un error podría contener información privada: usamos el estado.
+        # Los endpoints JSON de metadatos y observaciones deben responder HTTP 200.
         if response.status_code != 200:
             raise RuntimeError(f"{provider}: respuesta HTTP {response.status_code}.")
 

@@ -1,0 +1,104 @@
+{
+  "provider": "Banxico",
+  "series_code": "SF43718",
+  "kind": "observations",
+  "captured_at_utc": "2026-11-03T21:55:26.310110+00:00",
+  "window_start": "2026-09-01",
+  "window_end": "2026-09-30",
+  "payload": {
+    "bmx": {
+      "series": [
+        {
+          "idSerie": "SF43718",
+          "titulo": "Tipo de cambio                                          Pesos por dólar E.U.A. Tipo de cambio para solventar obligaciones denominadas en moneda extranjera Fecha de determinación (FIX)",
+          "datos": [
+            {
+              "fecha": "01/09/2026",
+              "dato": "16.9755"
+            },
+            {
+              "fecha": "02/09/2026",
+              "dato": "16.9852"
+            },
+            {
+              "fecha": "03/09/2026",
+              "dato": "16.9560"
+            },
+            {
+              "fecha": "04/09/2026",
+              "dato": "16.8748"
+            },
+            {
+              "fecha": "07/09/2026",
+              "dato": "16.9237"
+            },
+            {
+              "fecha": "08/09/2026",
+              "dato": "16.9202"
+            },
+            {
+              "fecha": "09/09/2026",
+              "dato": "16.8947"
+            },
+            {
+              "fecha": "10/09/2026",
+              "dato": "16.9722"
+            },
+            {
+              "fecha": "11/09/2026",
+              "dato": "16.9707"
+            },
+            {
+              "fecha": "14/09/2026",
+              "dato": "17.1277"
+            },
+            {
+              "fecha": "15/09/2026",
+              "dato": "17.1527"
+            },
+            {
+              "fecha": "17/09/2026",
+              "dato": "17.1872"
+            },
+            {
+              "fecha": "18/09/2026",
+              "dato": "17.2450"
+            },
+            {
+              "fecha": "21/09/2026",
+              "dato": "17.2203"
+            },
+            {
+              "fecha": "22/09/2026",
+              "dato": "17.3015"
+            },
+            {
+              "fecha": "23/09/2026",
+              "dato": "17.5030"
+            },
+            {
+              "fecha": "24/09/2026",
+              "dato": "17.6425"
+            },
+            {
+              "fecha": "25/09/2026",
+              "dato": "17.7100"
+            },
+            {
+              "fecha": "28/09/2026",
+              "dato": "17.8413"
+            },
+            {
+              "fecha": "29/09/2026",
+              "dato": "18.0710"
+            },
+            {
+              "fecha": "30/09/2026",
+              "dato": "18.0692"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
