@@ -6,10 +6,12 @@
 
 El proyecto integra precios internacionales de maíz, trigo y soya de FRED con el tipo de cambio FIX de Banxico para preparar referencias mensuales en pesos mexicanos. El alcance y las etapas previstas se mantienen en el [plan de implementación](../PLAN_IMPLEMENTACION_ES.md).
 
-Se completó la preparación del entorno, la conexión autenticada a las fuentes, la validación de sus metadatos y la extracción de una muestra con conservación de respuestas y perfil de calidad. La muestra contiene 30 observaciones y completó las reglas implementadas sin incidencias. La cobertura diaria de FIX permanece pendiente de validación con el calendario bancario.
+Se completó la preparación del entorno, la conexión autenticada a las fuentes, la validación de sus metadatos y la extracción de una muestra con conservación de respuestas y perfil de calidad. La muestra contiene 30 observaciones y completó las reglas de perfil sin incidencias. Una comprobación posterior del FIX de septiembre de 2026 validó sus 21 fechas contra el calendario bancario revisado.
+
 
 Sobre esa evidencia se definieron el modelo, el diccionario y las reglas para las cargas. Se implementaron después las funciones de registro operativo, integridad de capturas, preparación y escritura Silver. Estas funciones se validaron en PostgreSQL aislado y la vista previa local preparó las 30 observaciones archivadas.
 
+Se incorporaron las funciones compartidas de media FIX, referencias mensuales en MXN/t y variaciones por fecha exacta. La vista previa Gold produjo tres referencias para septiembre desde las capturas archivadas. Su persistencia y publicación coordinada permanecen pendientes.
 
 Este documento registra el avance de implementación y sus verificaciones. El detalle cuantitativo se presenta en el [perfilamiento inicial](Perfilamiento_inicial.md).
 
@@ -28,8 +30,9 @@ Este documento registra el avance de implementación y sus verificaciones. El de
 | Evidencia inicial | Revisión de la muestra real, reproducción del perfil y conservación de las capturas que sustentan sus resultados. | `de1fb9d2` |
 | Modelo y calidad | Diseño de ocho entidades, diccionario de campos y reglas de publicación para histórico e incremental independientes. | `7eac5daf` |
 | Preparación PostgreSQL | SQL inicial, tabla técnica de versiones, conexión privada, catálogo y verificación de solo lectura. | `d26c777` |
-| Documentación de ejecución | README en inglés con resumen, requisitos, preparación de PostgreSQL y comandos; seguimiento del desarrollo conservado en esta bitácora. | `4d3ea3fb` |
-| Persistencia y preparación Silver | Registro de intentos, capturas y DQ; verificación de integridad, conversión a tipos comunes y escritura por clave natural. | Avance actual, pendiente de commit. |
+| Documentación de ejecución | README en inglés con resumen, requisitos, preparación de PostgreSQL y comando, seguimiento del desarrollo conservado en esta bitácora. | `4d3ea3fb` |
+| Persistencia y preparación Silver | Registro de intentos, capturas y DQ, verificación de integridad, conversión a tipos comunes y escritura por clave natural. | `a12de0e9` |
+| Calendario y transformaciones Gold | Referencia bancaria 2026, regla DQ-09, dependencias mensuales, media FIX, referencias MXN/t y variaciones. | Avance actual, pendiente de commit. |
 
 ## 3. Organización de la implementación
 
@@ -37,13 +40,13 @@ El código se distribuye por responsabilidad mediante funciones y paquetes, dond
 
 | Componente | Responsabilidad implementada |
 |---|---|
-| `common/` | Configuración privada, interpretación de fechas y operaciones de calendario compartidas. |
+| `common/` | Configuración privada, fechas, operaciones de calendario y política decimal compartida. |
 | `clients/` | Comunicación HTTP, autenticación, tiempos de espera y errores controlados. |
-| `sources/` | Catálogo, contratos de metadatos y observaciones, consultas y selección de ventanas. |
+| `sources/` | Catálogo, contratos, consultas, selección de ventanas y referencias bancarias anuales. |
 | `extraction/` | Conservación de capturas y coordinación de la muestra. |
-| `quality/` | Interpretación decimal, perfil, aceptación de registros y resultados por regla. |
+| `quality/` | Interpretación decimal, perfil, aceptación de registros, cobertura bancaria y dependencias Gold. |
 | `persistence/` | Conexión, esquema, catálogo y operaciones sobre intentos, capturas, DQ y observaciones. |
-| `transformations/` | Preparación de observaciones con fechas y decimales tipados. |
+| `transformations/` | Preparación Silver, media FIX, referencias MXN/t, variaciones y vistas previas locales. |
 | `tests/` | Casos simulados de configuración, comunicación, contratos, fechas, captura y calidad. |
 
 El flujo implementado consulta los metadatos, determina las ventanas, solicita las observaciones, conserva el JSON recibido y aplica el contrato y las reglas de perfil. Los números se interpretan directamente desde texto con `Decimal`, manteniendo la precisión disponible en las fuentes.
@@ -66,15 +69,16 @@ Las capturas operativas permanecen excluidas de Git. La copia seleccionada para 
 
 | Tipo de verificación | Evidencia disponible |
 |---|---|
-| Pruebas sin servidor | 86 casos aprobados de configuración, contratos, captura, calidad, preparación Silver y manejo de errores. |
-| Pruebas SQL | 22 casos aprobados en PostgreSQL 18.6 aislado: esquema, transacciones, procedencia, DQ, repetición y revisiones Silver. |
+| Pruebas sin servidor | 108 casos aprobados, incluyen 22 nuevos de calendario y Gold, además de los 86 previos. |
+| Pruebas SQL | 22 casos aprobados previamente en PostgreSQL 18.6 aislado, omitidos en la verificación de este paso, sin cambios SQL. |
 | Consultas reales previas | Confirmación de acceso, contratos de metadatos, disponibilidad y propuesta de ventanas de las cuatro series. |
 | Muestra real | 3 observaciones por grano de julio a septiembre de 2026 y 21 observaciones FIX de septiembre: 30 registros en total. |
 | Reproducción del perfil | Los cuatro perfiles recalculados desde las capturas coinciden con `profile.json`. |
 | Calidad observada | Cero ausentes, formatos inválidos, valores no positivos, fechas incompatibles, fechas fuera de ventana y duplicados. |
 | Cobertura mensual | Tres meses esperados y tres meses con valores utilizables en cada grano. |
-| Cobertura diaria | Pendiente del calendario hábil bancario, el conteo de 21 registros no acredita por sí solo la integridad del mes FIX. |
+| Cobertura diaria | Septiembre de 2026, igualdad de las 21 fechas esperadas y recibidas, sin faltantes, inesperadas o duplicadas. |
 | Preparación Silver real | Las 30 observaciones archivadas se prepararon como `date` y `Decimal` sin consultar APIs ni escribir en la base del proyecto. |
+| Transformación Gold real | 24 entradas del mes seleccionado: tres precios y 21 FIX. Se produjeron una media y tres referencias MXN/t en memoria. |
 
 
 Las pruebas simuladas verifican el comportamiento del código mientras que la muestra real aporta evidencia sobre los registros efectivamente recibidos. Ambas verificaciones tienen alcances distintos y se documentan por separado.
@@ -97,14 +101,34 @@ También se ejecutó el comando `python -X utf8 -m grain_pipeline.transformation
 
 Al terminar las pruebas se cerró la instancia temporal. Los informes documentales se exportaron mediante scripts ejecutados en línea durante la sesión de PowerShell, esos generadores no quedaron incorporados como archivos `.py` reutilizables. Las pruebas y funciones invocadas forman parte del código del proyecto. Los archivos de `docs/evidencias/` son registros de esas ejecuciones y no una exportación automática de los comandos de preparación o vista previa.
 
+### 5.2. Referencia bancaria y verificación de las transformaciones Gold
+
+Se revisó la definición de FIX de determinación de Banxico y la publicación de las disposiciones de cierre bancario 2026 de la CNBV en el DOF. Se cotejaron las fechas con la relación de la Asociación de Bancos de México. Las fuentes, fechas de publicación y revisión, fines de semana y cierres quedaron registrados en `sources/calendars/2026.json`. La referencia se identificó mediante versión y SHA-256 con saltos de línea normalizados.
+
+Se separó la lectura del calendario de la regla `DQ-09`. Esta última comparó las fechas FIX utilizables con las esperadas y conservó los faltantes, inesperados, duplicados y registros inválidos. Los años sin referencia revisada quedaron como `pending`, condición que impide generar el agregado. La regla se probó también con 21 filas cuyo conteo coincide, pero cuyas fechas no corresponden al calendario: la evaluación falló como se requería.
+
+Se implementaron funciones independientes para validar el conjunto Silver, agregar FIX y construir Gold. Se exigieron meses cerrados, claves únicas y los tres precios por mes. Los cálculos utilizaron contextos decimales locales de 34 dígitos y `ROUND_HALF_EVEN`. Las variaciones se asociaron al mes anterior y al mismo mes del año previo, una ausencia interior bloqueó el cálculo. Una revisión ficticia de agosto comprobó el recálculo de su referencia y de la variación dependiente de septiembre.
+
+La suite completa se ejecutó con Python 3.12.4 mediante un script Python en línea desde PowerShell, con `unittest.TestLoader().discover("tests")` y `unittest.TextTestRunner`. Para esta ejecución se retiró `TEST_DATABASE_URL` únicamente del entorno del proceso de prueba. Se descubrieron 130 casos, se ejecutaron 108 sin fallos ni errores y se omitieron los 22 que requieren PostgreSQL. Los contadores y el contexto de ejecución se exportaron a [validacion.json](evidencias/calendario_gold/validacion.json). No se inició una instancia ni se repitieron las pruebas SQL del avance Silver.
+
+La vista previa real se ejecutó mediante el comando incorporado al proyecto:
+
+```powershell
+python -X utf8 -m grain_pipeline.transformations.gold_preview --month 2026-09 --sample-dir docs/evidencias/perfilamiento_inicial --bronze-root docs/evidencias/perfilamiento_inicial --output docs/evidencias/calendario_gold/vista_previa.json
+```
+
+La carpeta de destino se creó previamente. El comando validó las cuatro capturas completas, preparó Silver y seleccionó 24 entradas de septiembre. Certificó las 21 fechas FIX y obtuvo una media de `17.26401904761904761904761904761905` MXN/USD. Las referencias resultantes fueron aproximadamente 4,090.12 MXN/t para maíz, 4,261.65 para trigo y 8,316.46 para soya. MoM y YoY quedaron nulos al no incluir comparadores en esta vista previa de un mes.
+
+El [informe Gold](evidencias/calendario_gold/vista_previa.json) conservó valores completos, hashes de origen y métricas de calendario. Su exportación quedó disponible con `--output` en el módulo `gold_preview.py`, que rechaza sobrescribir archivos existentes. No se consultaron APIs, no se escribieron observaciones en PostgreSQL y no se modificaron watermarks. Las capturas, el perfil y las evidencias anteriores permanecieron intactos.
+
 ## 6. Estado de las capas y cargas
 
 | Frente | Estado al corte |
 |---|---|
 | Bronze | Captura local de muestras implementada y comprobada con respuestas reales. |
 | Silver | Preparación y escritura por captura implementadas y verificadas en entorno aislado, integración en el histórico completo pendiente. |
-| Gold | SQL de agregados y referencias implementado; certificación FIX y transformaciones pendientes. |
-| Carga histórica | Contrato de inicialización y publicación definido; periodo y proceso pendientes. |
+| Gold | Calendario 2026, regla de cobertura y transformaciones implementados, muestra de septiembre verificada. Escritura y publicación pendientes. |
+| Carga histórica | Contrato definido, periodo y proceso pendientes. Los años elegidos deberán contar con calendario revisado. |
 | Carga incremental | Contrato independiente definido, con requisito de histórico inicializado y revisión de periodos anteriores. Implementación pendiente. |
 | Persistencia y control | Funciones de intentos, capturas, DQ y observaciones implementadas. Publicador completo y watermark pendientes. |
 | Visualización y automatización | Pendientes del modelo analítico, el paquete instalable y la programación del incremental. |

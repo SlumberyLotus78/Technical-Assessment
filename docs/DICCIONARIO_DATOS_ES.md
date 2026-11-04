@@ -113,11 +113,11 @@ La persistencia del perfil recalcula las métricas desde la captura registrada y
 | `average_fix` | `NUMERIC` | No | Media FIX finita y positiva bajo la política decimal del modelo. |
 | `observed_days` | `INTEGER` | No | Número de fechas FIX válidas y distintas del mes. |
 | `expected_days` | `INTEGER` | No | Número de fechas del calendario bancario aplicable. |
-| `calendar_reference` | `TEXT` | No | Identificador de la evidencia versionada del calendario utilizado. |
+| `calendar_reference` | `TEXT` | No | Versión y SHA-256 del recurso bancario anual utilizado, con saltos de línea normalizados. |
 | `source_run_id` | `UUID` | No | FK a `ops.runs.run_id`, ejecución que produjo el agregado vigente. |
 | `calculated_at` | `TIMESTAMPTZ` | No | Instante de cálculo. |
 
-Los conteos deberán ser positivos e iguales. La certificación exigirá además igualdad de conjuntos de fechas y aprobación de los controles del mes. La evidencia concreta del calendario se incorporará al implementar su validación, los conteos de la muestra no sustituyen ese entregable.
+Los conteos deberán ser positivos e iguales. La certificación exige además igualdad de conjuntos de fechas y aprobación de los controles del mes. La referencia bancaria de 2026 y su validación están implementadas. Los otros años requieren sus propias referencias revisadas. El agregado se produce en memoria, la futura persistencia añadirá la ejecución y el instante de cálculo dentro de la transacción de publicación.
 
 ## 8. mart.grain_reference_monthly
 

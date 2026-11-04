@@ -4,7 +4,7 @@
 
 El SQL inicial y el preparador se validaron en una instancia aislada. Las funciones de registro operativo, preparación y escritura Silver están implementadas y probadas en entorno aislado. Las garantías de publicación descritas aquí siguen siendo el contrato para los coordinadores de carga hasta Gold.
 
-El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX. La muestra comprobó esos registros y la cobertura bancaria y el histórico completo permanecen pendientes.
+El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX. Una validación posterior de calendario y Gold certificó el FIX de septiembre de 2026 y calculó sus tres referencias. El histórico completo y la publicación permanecen pendientes.
 
 El detalle de campos se encuentra en el [diccionario de datos](DICCIONARIO_DATOS_ES.md) y los controles se especifican en el [catálogo de calidad](REGLAS_CALIDAD_ES.md).
 
@@ -59,9 +59,13 @@ Los valores de origen se almacenarán como `NUMERIC` sin una escala declarada qu
 
 Para las transformaciones se define un contexto decimal de 34 dígitos significativos y redondeo `ROUND_HALF_EVEN`. La media FIX se calculará primero y la referencia utilizará esa media almacenada. Las comparaciones DQ repetirán la misma política. El redondeo para presentación se aplicará al mostrar resultados. Esta política se implementará y verificará al construir las transformaciones, mediante un contexto local que restaure el entorno de cálculo al terminar. [Contextos decimales de Python](https://docs.python.org/3.12/library/decimal.html#context-objects).
 
+Las transformaciones implementan un contexto decimal de 34 dígitos significativos y redondeo `ROUND_HALF_EVEN`. La media FIX se calcula primero y la referencia utiliza esa misma media. Las comparaciones DQ repetirán la misma política. El redondeo para presentación se aplica al mostrar resultados. Se verificó que el contexto local restaura el entorno del llamador y que la configuración decimal externa no modifica los resultados. [Contextos decimales de Python](https://docs.python.org/3.12/library/decimal.html#context-objects).
+
 ## 5. Integración mensual y resultados Gold
 
 Para cada mes, el conjunto de fechas FIX válidas deberá coincidir con el calendario hábil bancario aplicable. Se conservarán el número observado, el esperado y una referencia a la evidencia del calendario. Las coincidencias de conteo por sí solas no sustituyen la comparación de fechas.
+
+La lectura anual, la comparación y el agregado ya están implementados en módulos separados. La referencia incorporada cubre 2026 e identifica su versión y SHA-256. Un año sin recurso revisado impide el agregado. Las funciones producen resultados en memoria, su escritura se integrará en la transacción de publicación.
 
 La convención analítica será la media aritmética de los valores FIX diarios válidos de ese mes:
 
@@ -114,3 +118,7 @@ Un reproceso de un intervalo ya publicado conservará los límites vigentes y ac
 | Histórico | Mes inicial y final explícitos, compatibles con las fuentes; controles del periodo completo. | Capturas, Silver, Gold y creación del estado inicial tras una publicación satisfactoria. |
 | Incremental | Watermark inicializado, meses nuevos y revisión delimitada de periodos anteriores. | Actualización hasta Gold, sin duplicados y con avance confirmado únicamente al publicar. |
 | Reproceso histórico | Intervalo explícito y validación completa de sus dependencias. | Corrección de filas y recálculo de Gold, conservando la evidencia y la continuidad del intervalo publicado. |
+
+
+ La ampliación Silver tiene [evidencia de 108 pruebas aprobadas](evidencias/persistencia_silver/validacion.json), incluidas 22 con PostgreSQL aislado. La ampliación de calendario y Gold tiene [108 casos ejecutados correctamente y 22 SQL omitidos](evidencias/calendario_gold/validacion.json), sobre 130 descubiertos. La carga histórica completa, los calendarios de sus años y la publicación se construirán sobre estas funciones.
+

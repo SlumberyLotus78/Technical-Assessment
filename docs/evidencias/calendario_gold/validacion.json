@@ -1,0 +1,16 @@
+{
+  "verified_at_utc": "2026-11-04T01:42:40.977978+00:00",
+  "python_version": "3.12.4",
+  "environment": "offline_unit_tests_and_archived_captures",
+  "tests_run": 130,
+  "tests_executed": 108,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 22,
+  "successful": true,
+  "new_calendar_gold_tests": 22,
+  "postgres_tests_executed": 0,
+  "postgres_tests_require": "TEST_DATABASE_URL",
+  "project_database_written": false,
+  "api_requests_made": false
+}

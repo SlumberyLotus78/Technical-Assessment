@@ -20,10 +20,10 @@ La persistencia del perfil ya genera códigos de este catálogo en `ops.dq_resul
 | `DQ-03` | Valores con formato numérico válido y finito. | Interpretación, preparación Silver y registro de evaluación implementados. | Cero formatos o tipos incompatibles. |
 | `DQ-04` | Valores requeridos presentes. | Marcadores de `quality/values.py`, preparación Silver y registro de evaluación implementados. | Cero valores ausentes en las observaciones requeridas. |
 | `DQ-05` | Precios y FIX positivos. | Perfil, preparación Silver y registro de evaluación implementados. | Cero valores menores o iguales a cero. |
-| `DQ-06` | Fecha única dentro de cada serie y entrada procesada. | Implementada por captura, comparación entre fragmentos pendiente del coordinador. | Cero duplicados en todas las páginas y fragmentos de la carga. |
+| `DQ-06` | Fecha única dentro de cada serie y entrada procesada. | Implementada por captura y en el conjunto Silver recibido por Gold, reunión de fragmentos pendiente del coordinador. | Cero duplicados en todas las páginas y fragmentos de la carga. |
 | `DQ-07` | Primer día como identificador de cada periodo mensual. | Contratos, preparación Silver y registro de evaluación implementados. | Cero identificadores mensuales incompatibles. |
-| `DQ-08` | Meses esperados con valor utilizable. | Implementada por ventana de captura, cobertura del intervalo global pendiente del coordinador. | Igualdad de los meses requeridos con los recibidos y validados,cero meses ausentes. |
-| `DQ-09` | Cobertura FIX contra calendario bancario versionado. | Certificación pendiente, la persistencia registra `pending_banking_calendar`. | Igualdad de conjuntos de fechas esperadas y válidas, sin duplicados ni valores ausentes. |
+| `DQ-08` | Meses esperados con valor utilizable. | Implementada por captura y para los tres granos de cada mes del intervalo recibido por Gold, integración con cargas pendiente. | Igualdad de los meses requeridos con los recibidos y validados, cero meses ausentes. |
+| `DQ-09` | Cobertura FIX contra calendario bancario versionado. | `quality/calendar.py` compara las fechas antes del agregado, referencia 2026 incorporada. El perfil por captura mantiene `pending`, el resultado mensual se evalúa aparte. | Igualdad de conjuntos de fechas esperadas y válidas, sin duplicados ni valores ausentes, años sin referencia revisada bloqueados. |
 
 Un campo estructural ausente detiene el contrato. Un campo presente con valor incompatible queda contabilizado en el perfil. Para una carga, las incidencias sobre registros requeridos impedirán publicar el intervalo afectado, no se eliminarán filas ni se sustituirán valores para aparentar cobertura.
 
@@ -34,10 +34,10 @@ Las consultas extensas deberán comprobarse en conjunto, incluidos límites de f
 | Código | Regla | Estado | Evidencia o condición exigida |
 |---|---|---|---|
 | `LIN-01` | Captura íntegra y vinculada a su serie y ejecución. | Registro SQL y comprobación de hash y contexto implementados, verificados en PostgreSQL aislado. | Archivo existente, SHA-256 coincidente y correspondencia entre observación, serie y captura de tipo `observations`. |
-| `PUB-01` | Dependencias mensuales completas. | Pendiente. | Por cada mes, tres precios de granos y un agregado FIX con todas sus reglas obligatorias aprobadas. |
-| `PUB-02` | Cálculos y unidades coherentes. | Pendiente. | Media FIX, conversión y variaciones reproducibles con la política decimal del modelo, entradas iguales a las fuentes validadas. |
+| `PUB-01` | Dependencias mensuales completas. | Funciones Gold exigen tres precios y FIX certificado para todos los meses, evaluación y registro del publicador pendientes. | Por cada mes, tres precios de granos y un agregado FIX con todas sus reglas obligatorias aprobadas. |
+| `PUB-02` | Cálculos y unidades coherentes. | Media, conversión y variaciones implementadas y probadas, verificación y registro en publicación pendientes. | Media FIX, conversión y variaciones reproducibles con la política decimal del modelo, entradas iguales a las fuentes validadas. |
 | `PUB-03` | Claves, referencias y tipos compatibles con el diccionario. | Restricciones SQL implementadas y verificadas en PostgreSQL aislado, integración con cargas pendiente. | PK, FK, campos obligatorios y restricciones de fila, además de las verificaciones de contexto del proceso. |
-| `PUB-04` | Reejecución sin duplicaciones y tratamiento de revisiones. | Repetición y revisiones Silver implementadas; reconstrucción Gold pendiente. | Una fila vigente por clave; actualizaciones de valores revisados, conservación de procedencia previa y recálculo de Gold dependiente. |
+| `PUB-04` | Reejecución sin duplicaciones y tratamiento de revisiones. | Repetición y revisiones Silver implementadas, recálculo Gold de intervalos probado. Escritura y coordinación de revisiones Gold pendientes. | Una fila vigente por clave, actualizaciones de valores revisados, conservación de procedencia previa y recálculo de Gold dependiente. |
 
 Las restricciones SQL implementadas refuerzan campos obligatorios, claves y condiciones que dependen de una fila. Las reglas de cobertura, identidad de la captura y consistencia entre entradas y resultados se aplicarán en funciones de carga. No se atribuirá a una FK o a un conteo una garantía que necesita esas verificaciones adicionales. La [evidencia SQL](evidencias/preparacion_postgres/validacion.json) corresponde a bases de prueba aisladas.
 
@@ -48,7 +48,7 @@ Los precios, el FIX y las referencias deberán ser finitos y positivos. Las vari
 | Código | Regla | Estado | Condición exigida |
 |---|---|---|---|
 | `CTL-01` | Histórico completo antes del primer incremental. | Pendiente. | Watermark creado por un histórico confirmado hasta Gold, con intervalo continuo publicado. |
-| `CTL-02` | Meses cerrados y avance sustentado. | Selección de muestra implementada, publicación pendiente. | Corte compatible con fuentes y fecha de operación, avance solo por meses con todas las dependencias y controles aprobados. |
+| `CTL-02` | Meses cerrados y avance sustentado. | Selección de muestra y rechazo de meses abiertos en Gold implementados, publicación pendiente. | Corte compatible con fuentes y fecha de operación, avance solo por meses con todas las dependencias y controles aprobados. |
 | `CTL-03` | Publicación atómica. | Preparación SQL y control externo del commit Silver verificados; publicador completo pendiente. | Silver, Gold, watermark y estado `succeeded` se confirman juntos, ante fallo se conserva el último estado publicado. |
 | `CTL-04` | Publicaciones serializadas y recuperación trazable. | Bloqueos de preparación y de fila de intento implementados, bloqueo del producto y recuperación de cargas pendientes. | Bloqueo del mismo producto y registro durable del intento, sus verificaciones y su eventual fallo. |
 
@@ -60,4 +60,4 @@ Los resultados de las reglas serán `passed`, `failed` o `pending`. Un resultado
 
 Los intentos conservarán sus capturas y métricas para explicar el resultado. Los mensajes de error se construirán con identificadores públicos y datos operativos, sin incluir valores de credenciales. Las verificaciones se repetirán al reprocesar datos revisados.
 
-La muestra inicial tiene cero incidencias en las reglas aplicadas, pero `DQ-09` continúa pendiente. Por esa razón sus 21 registros FIX son evidencia de exploración y aún no acreditan un agregado mensual publicable bajo este contrato.
+El perfil inicial conserva `DQ-09` pendiente como registro de esa exploración. La [comprobación mensual posterior](evidencias/calendario_gold/vista_previa.json) aprobó la cobertura FIX de septiembre de 2026 y produjo un agregado y tres referencias en memoria. La publicación del producto requiere todavía la integración transaccional, el registro operativo completo y las reglas del coordinador. 

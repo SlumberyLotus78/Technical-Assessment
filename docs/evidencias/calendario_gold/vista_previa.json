@@ -1,0 +1,152 @@
+{
+  "verified_at_utc": "2026-11-04T01:42:57.532582+00:00",
+  "as_of": "2026-11-03",
+  "month": "2026-09-01",
+  "sample_directory": "perfilamiento_inicial",
+  "source_captures": [
+    {
+      "provider": "Banxico",
+      "series_code": "SF43718",
+      "storage_path": "banxico_SF43718_observations.json",
+      "content_sha256": "baa9120aab18944738c356b1bdad0e8e29165709a0495efcf316a65e5b8734b0"
+    },
+    {
+      "provider": "FRED",
+      "series_code": "PMAIZMTUSDM",
+      "storage_path": "fred_PMAIZMTUSDM_observations.json",
+      "content_sha256": "f21fa0e7a7d70bf6a7ab11c97fa3fab9777264bba0123d37c32722b31e96f738"
+    },
+    {
+      "provider": "FRED",
+      "series_code": "PSOYBUSDM",
+      "storage_path": "fred_PSOYBUSDM_observations.json",
+      "content_sha256": "d8e0150abb713f7f2e0ce71ce40aa48a49eb8f668c2148d0e1cd35132008fe50"
+    },
+    {
+      "provider": "FRED",
+      "series_code": "PWHEAMTUSDM",
+      "storage_path": "fred_PWHEAMTUSDM_observations.json",
+      "content_sha256": "d9ae40e78e97aa3c20272f8eba1b626fe79b96afd137e120707736ff06cc190b"
+    }
+  ],
+  "selected_silver_rows": 24,
+  "database_written": false,
+  "decimal_precision": 34,
+  "decimal_rounding": "ROUND_HALF_EVEN",
+  "coverage_check": {
+    "rule_code": "DQ-09",
+    "status": "passed",
+    "details": {
+      "month": "2026-09-01",
+      "observed_days": 21,
+      "observed_dates": [
+        "2026-09-01",
+        "2026-09-02",
+        "2026-09-03",
+        "2026-09-04",
+        "2026-09-07",
+        "2026-09-08",
+        "2026-09-09",
+        "2026-09-10",
+        "2026-09-11",
+        "2026-09-14",
+        "2026-09-15",
+        "2026-09-17",
+        "2026-09-18",
+        "2026-09-21",
+        "2026-09-22",
+        "2026-09-23",
+        "2026-09-24",
+        "2026-09-25",
+        "2026-09-28",
+        "2026-09-29",
+        "2026-09-30"
+      ],
+      "invalid_rows": 0,
+      "duplicate_dates": [],
+      "expected_days": 21,
+      "expected_dates": [
+        "2026-09-01",
+        "2026-09-02",
+        "2026-09-03",
+        "2026-09-04",
+        "2026-09-07",
+        "2026-09-08",
+        "2026-09-09",
+        "2026-09-10",
+        "2026-09-11",
+        "2026-09-14",
+        "2026-09-15",
+        "2026-09-17",
+        "2026-09-18",
+        "2026-09-21",
+        "2026-09-22",
+        "2026-09-23",
+        "2026-09-24",
+        "2026-09-25",
+        "2026-09-28",
+        "2026-09-29",
+        "2026-09-30"
+      ],
+      "missing_dates": [],
+      "unexpected_dates": [],
+      "calendar_reference": "mx-banking-2026-v1:sha256:2845065041bc4d298ca2a572a53410a351cd45aca820d4ca6228cff4073c3044",
+      "evidence_urls": [
+        "https://sidof.segob.gob.mx/notas/5775684",
+        "https://m.abm.org.mx/dias-feriados/",
+        "https://www.banxico.org.mx/apps/dao-web/4/52/tipo-cambio-equilibrio001.html"
+      ],
+      "verified_on": "2026-11-03",
+      "coverage_status": "complete"
+    }
+  },
+  "fx_monthly": [
+    {
+      "provider": "Banxico",
+      "series_code": "SF43718",
+      "month": "2026-09-01",
+      "average_fix": "17.26401904761904761904761904761905",
+      "observed_days": 21,
+      "expected_days": 21,
+      "calendar_reference": "mx-banking-2026-v1:sha256:2845065041bc4d298ca2a572a53410a351cd45aca820d4ca6228cff4073c3044"
+    }
+  ],
+  "grain_reference_monthly": [
+    {
+      "provider": "FRED",
+      "series_code": "PMAIZMTUSDM",
+      "month": "2026-09-01",
+      "fx_provider": "Banxico",
+      "fx_series_code": "SF43718",
+      "grain_price_usd_t": "236.9161241071429",
+      "average_fix_mxn_usd": "17.26401904761904761904761904761905",
+      "reference_mxn_t": "4090.124479273793256893333333333334",
+      "mom_change_pct": null,
+      "yoy_change_pct": null
+    },
+    {
+      "provider": "FRED",
+      "series_code": "PSOYBUSDM",
+      "month": "2026-09-01",
+      "fx_provider": "Banxico",
+      "fx_series_code": "SF43718",
+      "grain_price_usd_t": "481.7223363582059",
+      "average_fix_mxn_usd": "17.26401904761904761904761904761905",
+      "reference_mxn_t": "8316.463590551616337712380952380954",
+      "mom_change_pct": null,
+      "yoy_change_pct": null
+    },
+    {
+      "provider": "FRED",
+      "series_code": "PWHEAMTUSDM",
+      "month": "2026-09-01",
+      "fx_provider": "Banxico",
+      "fx_series_code": "SF43718",
+      "grain_price_usd_t": "246.85180245",
+      "average_fix_mxn_usd": "17.26401904761904761904761904761905",
+      "reference_mxn_t": "4261.654219435894285714285714285715",
+      "mom_change_pct": null,
+      "yoy_change_pct": null
+    }
+  ]
+}

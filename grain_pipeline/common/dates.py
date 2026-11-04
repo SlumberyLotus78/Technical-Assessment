@@ -43,3 +43,15 @@ def month_end(day: date) -> date:
     """Devuelve el último día calendario del mes indicado."""
     last_day = calendar.monthrange(day.year, day.month)[1]
     return day.replace(day=last_day)
+
+def months_between(start: date, end: date) -> list[date]:
+    """Enumera un intervalo inclusivo de meses identificados por su primer día."""
+    if (type(start) is not date or type(end) is not date or start.day != 1
+            or end.day != 1 or start > end):
+        raise ValueError("El intervalo requiere meses inicial y final válidos y ordenados.")
+    result, current = [], start
+    while True:
+        result.append(current)
+        if current == end:
+            return result
+        current = shift_month(current, 1)

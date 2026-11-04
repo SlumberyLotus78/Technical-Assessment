@@ -104,8 +104,6 @@ Check the installed SQL version, tables, and catalog in read-only mode:
 .\.venv\Scripts\python.exe -X utf8 -m grain_pipeline.persistence.initialize --env-file .env --check-only
 ```
 
-The [PostgreSQL guide](docs/GUIA_POSTGRESQL_ES.md) describes connection formats, permissions, version checks, and schema verification.
-
 ## Source Validation and Sample Extraction
 
 ### Validate Source Metadata
@@ -143,8 +141,21 @@ Use `--output-dir PATH` to choose another sample root directory. The default `da
 
 This command reads the latest complete sample under `data/bronze/samples/`, validates its observations, prepares dates and decimal values in memory, and displays the row counts. Use `--sample-dir PATH` to select a sample and `--bronze-root PATH` to specify its storage root.
 
-The [Silver preparation guide](docs/GUIA_PERSISTENCIA_SILVER_ES.md) describes record validation, capture integrity, persistence functions, and transaction boundaries.
 
+
+## Preview Monthly Gold References
+
+Choose the closed month covered by the FIX sample. For a September 2026 sample:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -m grain_pipeline.transformations.gold_preview --month 2026-09
+```
+
+The command validates all four observation captures, compares FIX dates with the reviewed banking calendar, calculates the monthly mean FIX, and produces three grain references in MXN per metric ton. It runs locally from the sample files.
+
+Use `--sample-dir PATH` and `--bronze-root PATH` to select an explicit sample. Add `--output PATH` to create a JSON report with source hashes, calendar evidence, and calculated values. The destination directory must exist; existing files are rejected.
+
+Each requested year requires a reviewed calendar resource under `grain_pipeline/sources/calendars/`. Missing calendar evidence or incomplete monthly inputs block the calculation.
 
 ## Tests
 
@@ -154,21 +165,21 @@ Run the test suite:
 .\.venv\Scripts\python.exe -X utf8 -m unittest discover -s tests -v
 ```
 
-Tests use fixtures, archived captures, and simulated API responses. PostgreSQL integration tests require `TEST_DATABASE_URL` pointing to a dedicated database whose name begins with `grain_test_`, using an account with permission to create databases. Each integration case creates and removes its own `grain_test_<uuid>` database
+Tests use fixtures, archived captures, and simulated API responses. PostgreSQL integration tests require `TEST_DATABASE_URL` pointing to a dedicated database whose name begins with `grain_test_`, using an account with permission to create databases. Each integration case creates and removes its own `grain_test_<uuid>` database.
 
-Integration tests are skipped when `TEST_DATABASE_URL` is not set. Their connection is independent of the project database configured in `.env`. See the [PostgreSQL guide](docs/GUIA_POSTGRESQL_ES.md) for integration-test requirements.
 
 ## Project Structure
 
 ```text
 grain_pipeline/
     clients/          Authenticated HTTP communication
-    common/           Configuration and shared date utilities
+    common/           Configuration, dates, and decimal calculation policy
     extraction/       Source captures and sample extraction
-    persistence/      PostgreSQL connections, schema setup, and catalog
+    persistence/      PostgreSQL setup, run records, provenance, and data writes
         sql/          Versioned SQL resources
-    quality/          Numeric interpretation and data-quality profiling
-    sources/          Series catalog, contracts, and source queries
+    quality/          Record, coverage, and monthly dependency rules
+    sources/          Series catalog, contracts, source queries, and banking calendars
+    transformations/  Typed Silver records, monthly FIX, and Gold references
 tests/                Unit and PostgreSQL integration tests
 docs/                 Technical documentation and evidence
 data/                 Local generated captures and reports
@@ -179,7 +190,6 @@ data/                 Local generated captures and reports
 - [Data model](docs/MODELO_DATOS_ES.md)
 - [Data dictionary](docs/DICCIONARIO_DATOS_ES.md)
 - [Data-quality rules](docs/REGLAS_CALIDAD_ES.md)
-- [PostgreSQL setup and command guide](docs/GUIA_POSTGRESQL_ES.md)
 - [Initial data profiling](docs/Perfilamiento_inicial.md)
 - [Implementation process](docs/Implementación_proceso.md)
 
