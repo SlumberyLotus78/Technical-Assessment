@@ -2,7 +2,7 @@
 
 ## 1. Alcance y convenciones
 
-Este diccionario especifica las ocho tablas del [modelo de datos](MODELO_DATOS_ES.md) y la tabla técnica de versiones añadida durante su implementación SQL. El recurso `persistence/sql/001_initial.sql` se comprobó en PostgreSQL, su preparación en la base del proyecto se realizará mediante el comando de inicialización. Las reglas que exceden una restricción de fila se implementarán en los procesos según el [catálogo DQ](REGLAS_CALIDAD_ES.md).
+Este diccionario especifica las ocho tablas del [modelo de datos](MODELO_DATOS_ES.md) y la tabla técnica de versiones añadida durante su implementación SQL. El recurso `persistence/sql/001_initial.sql` se comprobó en PostgreSQL, su preparación en la base del proyecto se realizará mediante el comando de inicialización. El publicador integra las comprobaciones de conjunto del [catálogo DQ](REGLAS_CALIDAD_ES.md), su conexión con los comandos de extracción completos permanece pendiente.
 
 `PK` identifica una clave primaria y `FK` una relación con otra tabla. Los componentes de una clave compuesta se interpretan juntos. Los identificadores `UUID` corresponden a ejecuciones, capturas y verificaciones técnicas. Los códigos de las fuentes conservan su valor público original.
 
@@ -117,7 +117,7 @@ La persistencia del perfil recalcula las métricas desde la captura registrada y
 | `source_run_id` | `UUID` | No | FK a `ops.runs.run_id`, ejecución que produjo el agregado vigente. |
 | `calculated_at` | `TIMESTAMPTZ` | No | Instante de cálculo. |
 
-Los conteos deberán ser positivos e iguales. La certificación exige además igualdad de conjuntos de fechas y aprobación de los controles del mes. La referencia bancaria de 2026 y su validación están implementadas. Los otros años requieren sus propias referencias revisadas. El agregado se produce en memoria, la futura persistencia añadirá la ejecución y el instante de cálculo dentro de la transacción de publicación.
+Los conteos deben ser positivos e iguales. La certificación exige además igualdad de conjuntos de fechas y aprobación de los controles del mes. La referencia bancaria de 2026 y su validación están implementadas, los otros años requieren sus propias referencias revisadas. La persistencia añade ejecución e instante de cálculo dentro de la publicación y conserva la fila si ninguno de sus campos analíticos cambia.
 
 ## 8. mart.grain_reference_monthly
 
@@ -136,7 +136,7 @@ Los conteos deberán ser positivos e iguales. La certificación exige además ig
 | `source_run_id` | `UUID` | No | FK a `ops.runs.run_id`, ejecución del cálculo vigente. |
 | `calculated_at` | `TIMESTAMPTZ` | No | Instante de cálculo. |
 
-Las entradas conservadas deberán coincidir con Silver y con el agregado FIX referenciado. Las variaciones serán nulas si falta un comparador fuera del intervalo publicado y podrán tener signo negativo. Las FK aseguran la existencia de las dependencias, las funciones de transformación y calidad comprobarán sus valores y fórmulas.
+Las entradas conservadas deben coincidir con Silver y con el agregado FIX referenciado. Las variaciones son nulas si su comparador queda fuera del intervalo publicado y admiten signo negativo. El publicador compara los campos analíticos completos con el cálculo validado y actualiza solo filas modificadas, las filas sin cambios conservan `source_run_id` y `calculated_at`.
 
 ## 9. ops.watermarks
 
@@ -151,7 +151,7 @@ Las entradas conservadas deberán coincidir con Silver y con el agregado FIX ref
 | `last_run_id` | `UUID` | No | FK a `ops.runs.run_id`, última publicación confirmada. |
 | `updated_at` | `TIMESTAMPTZ` | No | Instante de actualización del control. |
 
-Los dos meses deberán ser primeros de mes y estar ordenados. La fila existirá tras una inicialización histórica satisfactoria, una muestra o carga parcial no la crearán. La ejecución inicial deberá ser histórica y estar confirmada, condiciones que verificará el proceso junto con la integridad del intervalo publicado. Un reproceso dentro de ese intervalo conservará sus límites y registrará la ejecución de la nueva publicación.
+Los dos meses deben ser primeros de mes y estar ordenados. La fila se crea al cerrar una publicación histórica completa. El lector verifica el origen histórico exitoso y la última ejecución publicada, el finalizador comprueba Silver y Gold antes de cerrar el avance. Un reproceso conserva los límites, una ampliación debe ser continua y `initial_run_id` se mantiene. Una repetición confirmada actualiza `last_run_id` aunque no cambien los hechos. El cierre de éxito y el watermark se confirman en la misma transacción que las capas.
 
 
 ## 10. ops.schema_migrations

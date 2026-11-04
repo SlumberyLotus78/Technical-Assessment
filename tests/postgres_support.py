@@ -22,14 +22,14 @@ class PostgresTestCase(unittest.TestCase):
         params = conninfo_to_dict(TEST_DATABASE_URL)
         if not params.get("dbname", "").startswith("grain_test_"):
             raise ValueError("La base de TEST_DATABASE_URL debe comenzar por grain_test_.")
-        self.admin = psycopg.connect(TEST_DATABASE_URL, autocommit=True)
+        self.admin = psycopg.connect(TEST_DATABASE_URL, autocommit=True, connect_timeout=10)
         self.addCleanup(self.admin.close)
         self.database_name = "grain_test_" + uuid4().hex
         self.admin.execute(sql.SQL("CREATE DATABASE {} TEMPLATE template0").format(
             sql.Identifier(self.database_name)))
         self.addCleanup(self.drop_test_database)
         self.database_url = make_conninfo(TEST_DATABASE_URL, dbname=self.database_name)
-        self.connection = psycopg.connect(self.database_url)
+        self.connection = psycopg.connect(self.database_url, connect_timeout=10)
         self.addCleanup(self.connection.close)
 
     def drop_test_database(self):

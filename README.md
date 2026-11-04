@@ -167,6 +167,21 @@ Run the test suite:
 
 Tests use fixtures, archived captures, and simulated API responses. PostgreSQL integration tests require `TEST_DATABASE_URL` pointing to a dedicated database whose name begins with `grain_test_`, using an account with permission to create databases. Each integration case creates and removes its own `grain_test_<uuid>` database.
 
+To load the test connection explicitly from the private `.env` file, add:
+
+```dotenv
+TEST_DATABASE_URL=postgresql://admin:YOUR_PASSWORD@localhost:5432/grain_test_bootstrap
+```
+
+Use an existing test database and a login role authorized to create databases. Run the complete suite with PostgreSQL required:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -m tests.run --postgres --env-file .env
+```
+
+The runner reads only the test connection key, validates the database prefix, and requires zero skipped cases in this mode. It never uses `DATABASE_URL` as a fallback. To run without PostgreSQL or private configuration, use `python -m tests.run`.
+
+Add `--report PATH` to create a JSON summary.
 
 ## Project Structure
 
@@ -175,6 +190,7 @@ grain_pipeline/
     clients/          Authenticated HTTP communication
     common/           Configuration, dates, and decimal calculation policy
     extraction/       Source captures and sample extraction
+    orchestration/    Publication preparation, product locking, and transaction coordination
     persistence/      PostgreSQL setup, run records, provenance, and data writes
         sql/          Versioned SQL resources
     quality/          Record, coverage, and monthly dependency rules

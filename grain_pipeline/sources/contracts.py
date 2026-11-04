@@ -61,7 +61,7 @@ def read_metadata_range(record: dict, series: dict) -> tuple[date, date]:
         raise ValueError("Proveedor de metadatos no soportado.")
 
     try:
-        # El proveedor determina el formato; el helper común interpreta la fecha.
+        # El proveedor determina el formato, el helper común interpreta la fecha.
         start = parse_date(record.get(start_field), iso=iso)
         end = parse_date(record.get(end_field), iso=iso)
     except ValueError:
@@ -76,12 +76,19 @@ def read_metadata_range(record: dict, series: dict) -> tuple[date, date]:
 
 
 def validate_metadata(payload: dict, series: dict) -> dict:
-    """Comprueba identidad, título y campos requeridos; devuelve el registro original."""
+    """Comprueba identidad, título y campos requeridos, devuelve el registro original."""
     record = read_series_record(payload, series)
+    return validate_metadata_record(record, series)
+
+
+def validate_metadata_record(record: dict, series: dict) -> dict:
+    """Revalida el registro conservado en Bronze, sin inventar una envoltura API."""
     provider = series["provider"]
     code = series["code"]
+    identifier = "id" if provider == "FRED" else "idSerie"
+    if not isinstance(record, dict) or record.get(identifier) != code:
+        raise ValueError(f"{provider} {code}: identificador de metadatos incompatible.")
 
-    # items entrega cada nombre de campo con su valor esperado.
     for field, expected_value in series["expected_metadata"].items():
         if normalize_text(record.get(field)) != normalize_text(expected_value):
             # El mensaje identifica el campo incompatible sin volcar la respuesta.

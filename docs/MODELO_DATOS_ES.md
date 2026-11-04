@@ -2,9 +2,9 @@
 
 ## 1. Estado y fundamento
 
-El SQL inicial y el preparador se validaron en una instancia aislada. Las funciones de registro operativo, preparación y escritura Silver están implementadas y probadas en entorno aislado. Las garantías de publicación descritas aquí siguen siendo el contrato para los coordinadores de carga hasta Gold.
+El SQL inicial y el preparador se validaron en una instancia aislada. La escritura Silver, Gold y el publicador transaccional están implementados y probados con datos ficticios en entorno aislado. Los coordinadores de extracción histórica e incremental se conectarán a estas funciones manteniendo sus comandos independientes.
 
-El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX. Una validación posterior de calendario y Gold certificó el FIX de septiembre de 2026 y calculó sus tres referencias. El histórico completo y la publicación permanecen pendientes.
+El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX. Una validación posterior de calendario y Gold certificó el FIX de septiembre de 2026 y calculó sus tres referencias. La publicación se verificó después en bases desechable, la ejecución histórica completa con fuentes reales permanece pendiente.
 
 El detalle de campos se encuentra en el [diccionario de datos](DICCIONARIO_DATOS_ES.md) y los controles se especifican en el [catálogo de calidad](REGLAS_CALIDAD_ES.md).
 
@@ -51,7 +51,7 @@ Las claves primarias evitan duplicados y las claves foráneas relacionan observa
 
 ## 4. Fechas, unidades y precisión
 
-La fecha de observación tendrá tipo `DATE`. En FRED, el primer día identifica todo el periodo mensual; en FIX identifica el día de determinación. La unidad y la frecuencia proceden del catálogo validado. Un cambio incompatible en los metadatos deberá detener la carga antes de reinterpretar valores almacenados.
+La fecha de observación tendrá tipo `DATE`. En FRED, el primer día identifica todo el periodo mensual, en FIX identifica el día de determinación. La unidad y la frecuencia proceden del catálogo validado. Un cambio incompatible en los metadatos deberá detener la carga antes de reinterpretar valores almacenados.
 
 Los instantes de captura, carga y ejecución utilizarán `TIMESTAMPTZ`. Se registrarán como instantes UTC y se presentarán en la zona que corresponda. `America/Mexico_City` seguirá determinando el día de operación y el cierre de mes. `TIMESTAMPTZ` conserva el instante, la identificación de esta zona operativa pertenece a la configuración. [Fechas y horas de PostgreSQL](https://www.postgresql.org/docs/current/datatype-datetime.html).
 
@@ -65,7 +65,8 @@ Las transformaciones implementan un contexto decimal de 34 dígitos significativ
 
 Para cada mes, el conjunto de fechas FIX válidas deberá coincidir con el calendario hábil bancario aplicable. Se conservarán el número observado, el esperado y una referencia a la evidencia del calendario. Las coincidencias de conteo por sí solas no sustituyen la comparación de fechas.
 
-La lectura anual, la comparación y el agregado ya están implementados en módulos separados. La referencia incorporada cubre 2026 e identifica su versión y SHA-256. Un año sin recurso revisado impide el agregado. Las funciones producen resultados en memoria, su escritura se integrará en la transacción de publicación.
+La lectura anual, la comparación y el agregado están implementados en módulos separados. La referencia incorporada cubre 2026 e identifica su versión y SHA-256. Un año sin recurso revisado impide el agregado. La persistencia escribe los resultados en la transacción de publicación y conserva filas y auditoría cuando sus valores no cambian.
+
 
 La convención analítica será la media aritmética de los valores FIX diarios válidos de ese mes:
 
@@ -83,13 +84,13 @@ mom_change_pct = (referencia del mes / referencia del mes anterior - 1) × 100
 yoy_change_pct = (referencia del mes / referencia del mismo mes del año anterior - 1) × 100
 ```
 
-Cuando el periodo de comparación quede fuera del histórico publicado, la variación será `NULL`. Se utilizarán los periodos exactos, sin sustituirlos por el último registro disponible. Las variaciones pueden ser cero o negativas; la regla de positividad corresponde a precios, FIX y referencias.
+Cuando el periodo de comparación quede fuera del histórico publicado, la variación será `NULL`. Se utilizarán los periodos exactos, sin sustituirlos por el último registro disponible. Las variaciones pueden ser cero o negativas, la regla de positividad corresponde a precios, FIX y referencias.
 
-Una revisión de un mes obliga a recalcular sus resultados dependientes. Se reconstruirá Gold desde el primer mes modificado hasta el último publicado, incluyendo las variaciones, dentro de la misma publicación. Si una revisión altera fechas o valores FIX, se repetirá además su validación de cobertura.
+Una revisión de un mes obliga a recalcular sus resultados dependientes. La implementación reconstruye el intervalo publicado completo para conservar los comparadores anteriores y modifica únicamente las filas Gold que cambian. Esto incluye las referencias revisadas y las variaciones posteriores afectadas. Si una revisión altera fechas o valores FIX, se repite su validación de cobertura.
 
 ## 6. Ejecuciones, calidad y procedencia
 
-`ops.runs` identificará cada intento histórico o incremental, su etapa y su estado. El diagnóstico de muestras continuará siendo un comando separado; sus archivos existentes son evidencia de exploración y no inicializan el control de producción.
+`ops.runs` identificará cada intento histórico o incremental, su etapa y su estado. El diagnóstico de muestras continuará siendo un comando separado, sus archivos existentes son evidencia de exploración y no inicializan el control de producción.
 
 Los estados de ejecución serán `running`, `succeeded`, `failed` y `skipped`. `succeeded` requiere una publicación confirmada, `skipped` permitirá registrar un incremental sin trabajo después de comprobar que existe una carga inicial válida. Una ejecución que queda en `running` tras una interrupción requerirá revisión de recuperación.
 
@@ -103,11 +104,11 @@ Se define un watermark común al producto `grain_reference_mxn`. Su intervalo ir
 
 La primera fila de watermark se creará únicamente cuando termine satisfactoriamente una carga histórica hasta Gold. El incremental exigirá esa inicialización y a partir de ella determinará los meses nuevos. La revisión de periodos anteriores utilizará un solapamiento explícito cuyo alcance se fijará al implementar el incremental. Las correcciones más antiguas requerirán un reproceso explícito.
 
-La actualización de Silver, Gold, watermark y estado de éxito pertenecerá a una misma transacción de publicación. PostgreSQL permite confirmar o revertir ese conjunto como una unidad. [Transacciones de PostgreSQL](https://www.postgresql.org/docs/current/tutorial-transactions.html).
+La actualización de Silver, Gold, watermark y estado de éxito pertenece a una misma transacción de publicación. Se verificaron la visibilidad desde otra sesión y la reversión tras fallos posteriores a las escrituras. [Transacciones de PostgreSQL](https://www.postgresql.org/docs/current/tutorial-transactions.html).
 
 El registro inicial del intento, sus capturas y sus resultados DQ se confirmarán antes y fuera de esa transacción, para conservar el diagnóstico cuando una publicación falle. Después de un fallo se revertirá la publicación y se registrará el error en una transacción separada. Los archivos Bronze permanecerán disponibles.
 
-Las publicaciones del mismo producto se serializarán. El mecanismo de bloqueo deberá impedir que otra ejecución cambie el estado usado para planear mientras se publica una carga. Se implementará con la persistencia y se comprobará al desarrollar el incremental.
+Las publicaciones del mismo producto se serializan mediante un bloqueo de sesión que permanece adquirido entre transacciones DQ y de publicación. La contención se rechaza sin espera indefinida. Los futuros coordinadores mantendrán este ámbito desde la planificación. Se comprobaron su duración entre commits y rollback y su liberación ante errores.
 
 Un reproceso de un intervalo ya publicado conservará los límites vigentes y actualizará los resultados afectados. Cualquier ampliación del intervalo deberá mantener continuidad. El watermark no retrocederá ni avanzará por recibir metadatos o completar únicamente Silver.
 
@@ -115,7 +116,7 @@ Un reproceso de un intervalo ya publicado conservará los límites vigentes y ac
 
 | Proceso | Entrada y condición inicial | Resultado exigido |
 |---|---|---|
-| Histórico | Mes inicial y final explícitos, compatibles con las fuentes; controles del periodo completo. | Capturas, Silver, Gold y creación del estado inicial tras una publicación satisfactoria. |
+| Histórico | Mes inicial y final explícitos, compatibles con las fuentes, controles del periodo completo. | Capturas, Silver, Gold y creación del estado inicial tras una publicación satisfactoria. |
 | Incremental | Watermark inicializado, meses nuevos y revisión delimitada de periodos anteriores. | Actualización hasta Gold, sin duplicados y con avance confirmado únicamente al publicar. |
 | Reproceso histórico | Intervalo explícito y validación completa de sus dependencias. | Corrección de filas y recálculo de Gold, conservando la evidencia y la continuidad del intervalo publicado. |
 
