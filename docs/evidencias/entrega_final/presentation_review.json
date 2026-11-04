@@ -1,0 +1,26 @@
+{
+  "format": "self_contained_html",
+  "slide_count": 12,
+  "all_slides_rendered": true,
+  "individual_visual_review_completed": true,
+  "reviewed_slide_numbers": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "final_html_sha256": "9a2f3a7536be869e805d4bb2c8e9e3a814e67163988c54d2dda9b397d9b2630b",
+  "pptx_created": false,
+  "source": "real_project_gold_and_verified_repository_evidence",
+  "full_dashboard_window_capture_claimed": false,
+  "chart_axis_labels_checked": true,
+  "private_browser_profile_used": true
+}

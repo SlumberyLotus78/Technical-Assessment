@@ -1,0 +1,32 @@
+{
+  "successful": true,
+  "version": "1.0.0",
+  "imported_from_installed_environment": true,
+  "dashboard_dependency_installed": false,
+  "calendar_years_checked": 18,
+  "sql_checksum_lf": "f5b7e1e10aa6c4019de935e0acc0b8d2cb4ac9d4b2d4f2204c02056efffb7dcf",
+  "fixture_api_calls": 24,
+  "silver_rows": 74,
+  "fx_months": 3,
+  "grain_references": 9,
+  "console_entry_points": [
+    "grain-dashboard",
+    "grain-historical",
+    "grain-incremental",
+    "grain-initialize",
+    "grain-recover",
+    "grain-reprocess",
+    "grain-scheduled",
+    "grain-state"
+  ],
+  "project_database_written": false,
+  "real_api_requests_made": false,
+  "console_entry_points_tested": 8,
+  "entry_point_verification_method": "installed main(argv) functions with --help via trusted Python",
+  "native_console_launchers_executed": false,
+  "supported_execution_method": "python -I -m",
+  "scheduled_readiness_exit_code": 0,
+  "test_database_removed": true,
+  "temporary_cluster_stopped": true,
+  "verified_wheel_sha256": "6b837665d44894e1a83e7e55bf71eaf87e349c6e6b30a7839ea350dbadb82f02"
+}

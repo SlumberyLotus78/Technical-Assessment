@@ -1,0 +1,15 @@
+{
+  "ready": true,
+  "start_month": "2009-01-01",
+  "published_through_month": "2026-09-01",
+  "initial_run_id": "08296631-7abd-4832-b605-0dbc2203e918",
+  "last_run_id": "2d5eef1b-603e-4d13-97ff-360fa54e0a81",
+  "silver_rows": 5102,
+  "fx_months": 213,
+  "grain_references": 639,
+  "verified_at_utc": "2026-11-04T05:36:56.870615+00:00",
+  "verification_method": "installed_wheel_read_only_with_Bronze_integrity_checks",
+  "database_written": false,
+  "new_api_requests": false,
+  "credentials_exported": false
+}

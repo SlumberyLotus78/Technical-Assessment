@@ -1,0 +1,16 @@
+﻿{
+    "task_name":  "GrainPipelineLearningIncremental",
+    "registered":  true,
+    "state":  "Ready",
+    "daily_at_local":  "20:00",
+    "timezone":  "Central Standard Time (Mexico)",
+    "next_run_local":  "2026-11-04T20:00:00",
+    "action_module":  "grain_pipeline.orchestration.scheduled",
+    "interpreter_is_automation_environment":  true,
+    "logon_type":  "Interactive",
+    "run_level":  "Limited",
+    "multiple_instances":  "IgnoreNew",
+    "historical_initialization_scheduled":  false,
+    "credentials_stored_in_task":  false,
+    "manually_started_against_project_database":  false
+}

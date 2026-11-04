@@ -1,0 +1,83 @@
+{
+  "created_at_utc": "2026-11-04T06:19:39.099887+00:00",
+  "version": "1.0.0",
+  "files": [
+    {
+      "path": "docs/evidencias/entrega_final/analisis_real.json",
+      "bytes": 103156,
+      "sha256": "bc706f1bad7ce6ca2ae8cda7f2d09917529d9bb1f48001ddf3d7bc6dc617d82a"
+    },
+    {
+      "path": "docs/evidencias/entrega_final/automation.json",
+      "bytes": 622,
+      "sha256": "dd5c2453cbc3685118a79e0574ebf202102d941fdc2a18d0d9f0fe162501f5a9"
+    },
+    {
+      "path": "docs/evidencias/entrega_final/estado_real.json",
+      "bytes": 512,
+      "sha256": "b3b46f35c3349050aaa571e4a91b99e833dfaf24750cd9867a1a72aff81777db"
+    },
+    {
+      "path": "docs/evidencias/entrega_final/presentation_review.json",
+      "bytes": 566,
+      "sha256": "e0e2981dccc45eb2165d4a12a105ec3c9b8b5c3fdcf96109c9bbf05b8c23ec04"
+    },
+    {
+      "path": "docs/evidencias/entrega_final/scheduler_smoke.json",
+      "bytes": 337,
+      "sha256": "63e33ad0f11866b2a23ca643c4dc12a7b301a80a71a9b1d8f6e99a04b5a17507"
+    },
+    {
+      "path": "docs/evidencias/entrega_final/validacion.json",
+      "bytes": 11594,
+      "sha256": "b2dc99fc751f02864bf555c00c496fb021e668aa5797853ca6c54410a19545aa"
+    },
+    {
+      "path": "docs/evidencias/entrega_final/wheel.json",
+      "bytes": 506,
+      "sha256": "e2805aa80c7fdcda3da3a4ce84119e19f1f20bdebd2fdc29606e544b4c84203f"
+    },
+    {
+      "path": "docs/evidencias/entrega_final/wheel_final_installation.json",
+      "bytes": 1070,
+      "sha256": "5135994650446f27c4a8e2adbd5019cc9371464747f0357fc11f2d4e4ec14051"
+    },
+    {
+      "path": "docs/evidencias/entrega_final/wheel_installation.json",
+      "bytes": 743,
+      "sha256": "9ca397f318affa5f3dd5bff243364727aa985339f5fc0d895f80888c9c15b097"
+    },
+    {
+      "path": "docs/presentation/solution_en.html",
+      "bytes": 4872594,
+      "sha256": "9a2f3a7536be869e805d4bb2c8e9e3a814e67163988c54d2dda9b397d9b2630b"
+    },
+    {
+      "path": "docs/architecture.svg",
+      "bytes": 1755,
+      "sha256": "1facb9181fd000a7ecaf796aaf13aed243a56bb6d1d829e62408734e4719d37f"
+    },
+    {
+      "path": "docs/figures/chart_1.png",
+      "bytes": 85146,
+      "sha256": "ef85c5ed64ad2b706e474ba3fd3564aa93aaae01116ea2c2fb323e2201899725"
+    },
+    {
+      "path": "docs/figures/chart_2.png",
+      "bytes": 19587,
+      "sha256": "ed87f66094ed93b42a1bbc70c1c775bac9ee9c3de83295a6c20a09b64ef41972"
+    },
+    {
+      "path": "docs/figures/chart_3.png",
+      "bytes": 15379,
+      "sha256": "83827d1bed4edfabd8da462db4e8175adbb0d194fbf1f49e3e292c029b4521fc"
+    },
+    {
+      "path": "dist/grain_pipeline-1.0.0-py3-none-any.whl",
+      "bytes": 121841,
+      "sha256": "6b837665d44894e1a83e7e55bf71eaf87e349c6e6b30a7839ea350dbadb82f02"
+    }
+  ],
+  "staged_by_assistant": false,
+  "committed_by_assistant": false
+}

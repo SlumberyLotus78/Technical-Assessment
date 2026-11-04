@@ -1,8 +1,10 @@
-# Plan de implementación: BANXICO FIX - FRED. Influencia del tipo de cambio al precio de los granos 
+# Plan de implementación: BANXICO FIX - FRED. Influencia del tipo de cambio en el precio de los granos
+
+Este documento conserva la propuesta inicial del proyecto. Sus etapas expresan el trabajo previsto, no una lista de pendientes actuales. Lo realizado y sus verificaciones se registran en el [proceso de implementación](docs/Implementación_proceso.md) y la [validación final](docs/VALIDACION_FINAL_ES.md).
 
 ## 1. Propósito y objetivo
 
-Este documento presenta una propuesta inicial para organizar el desarrollo del proyecto los detalles de las fuentes, las reglas específicas y los parámetros de operación se definirán durante las etapas correspondientes.
+Este documento presenta una propuesta inicial para organizar el desarrollo del proyecto. Los detalles de las fuentes, las reglas específicas y los parámetros de operación se definirán durante las etapas correspondientes.
 
 El objetivo será integrar precios internacionales de maíz, trigo y soya con el tipo de cambio FIX para analizar su referencia mensual en pesos mexicanos.
 
@@ -10,7 +12,7 @@ La pregunta que orientará el análisis será:
 
 **¿Cómo influyen el precio internacional y el tipo de cambio en la evolución de las referencias de estos granos en pesos?**
 
-Se buscará expresar los precios en una frecuencia y unidad comunes. La referencia resultante servirá para el análisis; su interpretación deberá considerar los componentes adicionales de una compra real, como transporte y condiciones comerciales.
+Se buscará expresar los precios en una frecuencia y unidad comunes. La referencia resultante servirá para el análisis, su interpretación deberá considerar los componentes adicionales de una compra real, como transporte y condiciones comerciales.
 
 ## 2. Alcance previsto
 
@@ -27,9 +29,9 @@ El periodo de análisis se definirá al revisar la disponibilidad y compatibilid
 
 ## 3. Propuesta técnica y organización
 
-Se propone utilizar Python y herramientas de procesamiento tabular para la integración, PostgreSQL para la persistencia y Streamlit con Plotly para la consulta visual, ademas las dependencias y sus versiones se documentarán al preparar cada componente.
+Se propone utilizar Python para la integración, PostgreSQL para la persistencia y Streamlit con Plotly para la consulta visual. Las dependencias y sus versiones se documentarán al preparar cada componente.
 
-El código se organizará por responsabilidad, utilizando funciones con nombres descriptivos, las reglas de calidad tendrán módulos propios y serán invocadas desde los procesos que las necesiten. Las transformaciones compartidas tendrán una implementación reutilizable.
+El código se organizará por responsabilidad, utilizando funciones con nombres descriptivos. Las reglas de calidad tendrán módulos propios y serán invocadas desde los procesos que las necesiten. Las transformaciones compartidas tendrán una implementación reutilizable.
 
 La estructura general propuesta será:
 
@@ -69,13 +71,13 @@ Se ejecutará de forma explícita para un periodo definido con el objetivo de in
 
 ### Carga incremental
 
-Tendrá un proceso y un comando independientes uilizando el estado de carga para determinar qué información consultar y actualizar. Requerirá una carga inicial completa y recorrerá las transformaciones necesarias hasta Gold.
+Tendrá un proceso y un comando independientes, utilizando el estado de carga para determinar qué información consultar y actualizar. Requerirá una carga inicial completa y recorrerá las transformaciones necesarias hasta Gold.
 
 Ambas cargas compartirán las reglas de calidad y las transformaciones. Se contemplarán mecanismos para tratar datos repetidos, revisiones de origen e interrupciones, conservando la trazabilidad.
 
 ### Control y ejecución programada
 
-Se utilizarán logs para registrar las ejecuciones, incluidos sus errores y watermarks para conservar el avance. Los watermarks avanzarán únicamente cuando la publicación correspondiente se complete correctamente.
+Se utilizarán logs para registrar las ejecuciones, incluidos sus errores, y watermarks para conservar el avance. Los watermarks avanzarán únicamente cuando la publicación correspondiente se complete correctamente.
 
 La ejecución programada invocará el incremental mediante un paquete Python distribuible como wheel. La preparación histórica será una operación separada. El mecanismo y la frecuencia de programación se definirán al preparar la automatización.
 
@@ -91,7 +93,7 @@ La ejecución programada invocará el incremental mediante un paquete Python dis
 | 6. Incremental y recuperación | Implementar la actualización por estado y comprobar reejecuciones e interrupciones. | Proceso incremental independiente y verificable. |
 | 7. Análisis | Preparar indicadores, visualizaciones e interpretación. | Dashboard conectado a PostgreSQL. |
 | 8. Automatización | Empaquetar el código y programar la actualización. | Wheel y ejecución incremental programada. |
-| 9. Validación y entrega | Comprobar el conjunto y documentar su reproducción. | Pruebas, documentación y presentación. |
+| 9. Validación y entrega | Comprobar el conjunto y documentar su reproducción. | Pruebas y documentación. |
 
 Cada etapa incluirá una comprobación apropiada antes de continuar con los componentes que dependan de ella.
 
@@ -110,8 +112,8 @@ Cada etapa incluirá una comprobación apropiada antes de continuar con los comp
 
 ## 8. Documentación y seguimiento
 
-Se mantendrán instrucciones de preparación y ejecución, un diccionario de datos, un diagrama del flujo y notas de las decisiones técnicas. La entrega incluirá capturas, hallazgos sustentados en los datos y una presentación en inglés para apoyar la explicación técnica del proyecto.
+Se mantendrán instrucciones de preparación y ejecución, un diccionario de datos y notas de las decisiones técnicas. La entrega incluirá evidencias y hallazgos sustentados en los datos para apoyar la explicación técnica del proyecto.
 
 El trabajo avanzará mediante commits asociados a cambios comprensibles y comprobados. Las decisiones concretas, las mediciones y las evidencias se registrarán en notas de implementación y reportes de validación conforme se produzcan.
 
-El README y la presentación declararán el apoyo de herramientas de IA y reconocerán las fuentes utilizadas.
+El README declarará el apoyo de herramientas de IA y reconocerá las fuentes utilizadas.

@@ -4,19 +4,22 @@
 
 **Mes final de la muestra:** septiembre de 2026.
 
+**Ámbito:** muestra real del proyecto.
+
+Este informe conserva los resultados del diagnóstico inicial. La certificación bancaria posterior y la validación del histórico completo se documentan al final, no sustituyen ni reescriben el perfil original.
 
 ## 1. Resultado principal
 
 La muestra analizada contiene **30 observaciones: nueve precios mensuales de granos y 21 registros diarios FIX**. Los 30 valores son numéricos y positivos. Las reglas aplicadas no detectaron ausentes, formatos inválidos, fechas incompatibles, registros fuera de ventana ni fechas duplicadas.
 
-Las tres series de granos tienen los tres meses esperados. La cobertura diaria de FIX permanece pendiente del calendario hábil bancario, tal como registra `coverage_status: pending_banking_calendar`. El resultado favorable de sus controles describe los registros recibidos y conserva esa comprobación pendiente. [Perfil generado](evidencias/perfilamiento_inicial/profile.json).
+Las tres series de granos tienen los tres meses esperados. En el perfil inicial, la cobertura diaria de FIX quedó pendiente del calendario hábil bancario, tal como registra `coverage_status: pending_banking_calendar`. El resultado favorable de sus controles describe los registros recibidos y conserva esa comprobación pendiente. [Perfil generado](evidencias/perfilamiento_inicial/profile.json).
 
 ## 2. Procedencia y comprobación de la evidencia
 
 | Elemento | Identificación |
 |---|---|
-| Ejecución | `20261103T215513253606Z_f3eb3f86a0734026aa8761a7d23324f7` |
-| Ubicación operativa | `data/bronze/samples/20261103T215513253606Z_f3eb3f86a0734026aa8761a7d23324f7/` |
+| Ejecución | `20261103T215523120075Z_7bb854f46f16499eb08a3e2a98098072` |
+| Ubicación operativa | `data/bronze/samples/20261103T215523120075Z_7bb854f46f16499eb08a3e2a98098072/` |
 | Momento de las capturas | 2026-11-03, entre 21:55:23 y 21:55:26 UTC. |
 | Estado registrado | `status: completed`, `has_issues: false`. |
 | Archivos examinados | Cuatro capturas de metadatos, cuatro capturas de observaciones y un perfil consolidado. |
@@ -39,7 +42,7 @@ Los campos se contrastaron con el catálogo. En FRED se comprobaron también la 
 
 Con fecha de referencia 2026-11-03, octubre era el último mes calendario cerrado. Las tres series FRED declararon septiembre como último periodo disponible, por lo que septiembre delimitó la muestra común. Se consultaron julio–septiembre para los granos y septiembre para FIX, conforme al tamaño de muestra implementado.
 
-Los límites de metadatos describen la disponibilidad declarada. La continuidad de todo el histórico deberá evaluarse durante su extracción y perfilamiento.
+Los límites de metadatos describen la disponibilidad declarada, esta muestra no evalúa la continuidad de todo el histórico. Esa comprobación corresponde a la extracción, el perfilamiento y la publicación del periodo completo.
 
 ## 4. Volumen y cobertura observados
 
@@ -87,14 +90,14 @@ Los extremos coinciden con `value_min` y `value_max` del perfil. Sus fechas se o
 
 Los valores FRED de esta muestra llegan hasta 13 posiciones decimales en cada serie, los de FIX tienen cuatro. Esta diferencia sustenta la conservación de precisión decimal en el almacenamiento y el tratamiento de cada unidad por separado. Los rangos describen únicamente los periodos consultados y no constituyen límites de aceptación para todo el histórico.
 
-## 7. Alcance de los hallazgos y continuidad
+## 7. Límites del diagnóstico y comprobaciones posteriores
 
 Los resultados acreditan que las cuatro fuentes entregaron observaciones con estructura compatible y que la muestra pasó los controles iniciales. Sustentan continuar con el modelo de datos, conservando proveedor, serie, fecha, unidad, valor decimal y referencia de captura, junto con controles de unicidad por serie y fecha.
 
-Quedan tres límites relevantes para las siguientes etapas:
+El diagnóstico inicial tenía tres límites de alcance:
 
-- **Cobertura FIX:** se debe contrastar el conjunto de fechas con el calendario hábil bancario antes de acreditar un mes completo.
+- **Cobertura FIX:** no contrastaba el conjunto de fechas con el calendario hábil bancario para acreditar un mes completo.
 - **Alcance temporal:** el histórico fuera de julio–septiembre de 2026 todavía no fue perfilado en este avance, el FIX de la muestra solo corresponde a septiembre.
-- **Integración analítica:** para integrar los tres meses de granos será necesario disponer también del FIX de julio y agosto, completar su validación y definir la agregación mensual. Esta ejecución conserva las unidades originales y aún no produce referencias Gold en pesos.
+- **Integración analítica:** no incluía FIX de julio y agosto ni producía referencias Gold en pesos, conservaba las unidades originales.
 
-El perfil del periodo histórico seleccionado ampliará esta evidencia y permitirá comprobar continuidad, duplicados, ausentes y revisiones a una escala mayor. El seguimiento de esa implementación se registrará en [Proceso de implementación](Implementación_proceso.md).
+Posteriormente, la [vista previa Gold](evidencias/calendario_gold/vista_previa.json) certificó las 21 fechas FIX de septiembre de 2026 y calculó tres referencias en memoria desde estas mismas capturas. La carga histórica incorporó las cuatro series para 2009-01 a 2026-09, con cobertura bancaria mensual. Se confirmó su ejecución real y el preflight instalado verificó después 5,102 observaciones Silver, 213 medias FIX y 639 referencias Gold mediante lecturas y comprobación de originales. La [validación final](VALIDACION_FINAL_ES.md) y el [proceso de implementación](Implementación_proceso.md) registran esas verificaciones con sus alcances propios, las 30 observaciones iniciales siguen siendo únicamente la muestra aquí examinada.
