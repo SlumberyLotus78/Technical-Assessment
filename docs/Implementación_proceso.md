@@ -8,7 +8,7 @@ El proyecto integra precios internacionales de maíz, trigo y soya de FRED con e
 
 Se completó la preparación del entorno, la conexión autenticada a las fuentes, la validación de sus metadatos y la extracción de una muestra con conservación de respuestas y perfil de calidad. La muestra contiene 30 observaciones y completó las reglas implementadas sin incidencias. La cobertura diaria de FIX permanece pendiente de validación con el calendario bancario.
 
-Sobre esa evidencia se definieron el modelo de persistencia, el diccionario de campos y el catálogo de reglas para las cargas. Se implementaron el SQL inicial, la conexión y un preparador transaccional con catálogo y control de versión. La validación del preparador utilizó PostgreSQL, su ejecución en la base del proyecto queda pendiente de configuración local.
+Sobre esa evidencia se definieron el modelo, el diccionario y las reglas para las cargas. Se implementaron después las funciones de registro operativo, integridad de capturas, preparación y escritura Silver. Estas funciones se validaron en PostgreSQL aislado y la vista previa local preparó las 30 observaciones archivadas.
 
 
 Este documento registra el avance de implementación y sus verificaciones. El detalle cuantitativo se presenta en el [perfilamiento inicial](Perfilamiento_inicial.md).
@@ -27,8 +27,9 @@ Este documento registra el avance de implementación y sus verificaciones. El de
 | Extracción y perfil | Consulta de observaciones, captura por ejecución y controles de fechas, valores, duplicados y cobertura mensual. | `de1fb9d2` |
 | Evidencia inicial | Revisión de la muestra real, reproducción del perfil y conservación de las capturas que sustentan sus resultados. | `de1fb9d2` |
 | Modelo y calidad | Diseño de ocho entidades, diccionario de campos y reglas de publicación para histórico e incremental independientes. | `7eac5daf` |
-| Preparación PostgreSQL | SQL inicial, tabla técnica de versiones, conexión privada, catálogo y verificación de solo lectura. | Avance actual, pendiente de commit. |
-| Documentación de ejecución | README actualizado listado de requisitos, preparación de PostgreSQL y comandos, seguimiento del desarrollo conservado en esta bitácora. | Incluida en el avance actual. |
+| Preparación PostgreSQL | SQL inicial, tabla técnica de versiones, conexión privada, catálogo y verificación de solo lectura. | `d26c777` |
+| Documentación de ejecución | README en inglés con resumen, requisitos, preparación de PostgreSQL y comandos; seguimiento del desarrollo conservado en esta bitácora. | `4d3ea3fb` |
+| Persistencia y preparación Silver | Registro de intentos, capturas y DQ; verificación de integridad, conversión a tipos comunes y escritura por clave natural. | Avance actual, pendiente de commit. |
 
 ## 3. Organización de la implementación
 
@@ -40,8 +41,9 @@ El código se distribuye por responsabilidad mediante funciones y paquetes, dond
 | `clients/` | Comunicación HTTP, autenticación, tiempos de espera y errores controlados. |
 | `sources/` | Catálogo, contratos de metadatos y observaciones, consultas y selección de ventanas. |
 | `extraction/` | Conservación de capturas y coordinación de la muestra. |
-| `quality/` | Interpretación decimal y perfil de calidad reutilizable. |
-| `persistence/` | Conexión, preparación SQL versionada y verificación del catálogo. |
+| `quality/` | Interpretación decimal, perfil, aceptación de registros y resultados por regla. |
+| `persistence/` | Conexión, esquema, catálogo y operaciones sobre intentos, capturas, DQ y observaciones. |
+| `transformations/` | Preparación de observaciones con fechas y decimales tipados. |
 | `tests/` | Casos simulados de configuración, comunicación, contratos, fechas, captura y calidad. |
 
 El flujo implementado consulta los metadatos, determina las ventanas, solicita las observaciones, conserva el JSON recibido y aplica el contrato y las reglas de perfil. Los números se interpretan directamente desde texto con `Decimal`, manteniendo la precisión disponible en las fuentes.
@@ -64,32 +66,47 @@ Las capturas operativas permanecen excluidas de Git. La copia seleccionada para 
 
 | Tipo de verificación | Evidencia disponible |
 |---|---|
-| Pruebas sin servidor | 72 casos aprobados de configuración, transporte simulado, contratos, captura, calidad y manejo de errores PostgreSQL. |
-| Pruebas SQL | 11 casos aprobados en PostgreSQL 18.6 aislado: repetición, reversión, restricciones, versiones, catálogo y preparación concurrente. |
+| Pruebas sin servidor | 86 casos aprobados de configuración, contratos, captura, calidad, preparación Silver y manejo de errores. |
+| Pruebas SQL | 22 casos aprobados en PostgreSQL 18.6 aislado: esquema, transacciones, procedencia, DQ, repetición y revisiones Silver. |
 | Consultas reales previas | Confirmación de acceso, contratos de metadatos, disponibilidad y propuesta de ventanas de las cuatro series. |
 | Muestra real | 3 observaciones por grano de julio a septiembre de 2026 y 21 observaciones FIX de septiembre: 30 registros en total. |
 | Reproducción del perfil | Los cuatro perfiles recalculados desde las capturas coinciden con `profile.json`. |
 | Calidad observada | Cero ausentes, formatos inválidos, valores no positivos, fechas incompatibles, fechas fuera de ventana y duplicados. |
 | Cobertura mensual | Tres meses esperados y tres meses con valores utilizables en cada grano. |
-| Cobertura diaria | Pendiente del calendario hábil bancario; el conteo de 21 registros no acredita por sí solo la integridad del mes FIX. |
-| Revisión de diseño y SQL | Claves, tipos y restricciones materializados en `001_initial.sql`, ocho entidades del modelo y una tabla técnica. La conexión del proyecto se comprobará con su configuración local. |
+| Cobertura diaria | Pendiente del calendario hábil bancario, el conteo de 21 registros no acredita por sí solo la integridad del mes FIX. |
+| Preparación Silver real | Las 30 observaciones archivadas se prepararon como `date` y `Decimal` sin consultar APIs ni escribir en la base del proyecto. |
 
 
 Las pruebas simuladas verifican el comportamiento del código mientras que la muestra real aporta evidencia sobre los registros efectivamente recibidos. Ambas verificaciones tienen alcances distintos y se documentan por separado.
 
-El [resumen de preparación PostgreSQL](evidencias/preparacion_postgres/validacion.json) registra 83 pruebas aprobadas, sin fallos ni omisiones, con Python 3.12.4 y Psycopg 3.3.7. Cada prueba SQL utilizó una base desechable propia dentro de una instancia temporal local, que se detuvo al terminar. La base indicada en el `.env` del proyecto no se utilizó para esas pruebas. 
-Sin conexión explícita de prueba, la suite omite los 11 casos SQL.
+El [resumen original de preparación PostgreSQL](evidencias/preparacion_postgres/validacion.json) registra 83 pruebas aprobadas, sin fallos ni omisiones, con Python 3.12.4 y Psycopg 3.3.7. Cada prueba SQL utilizó una base desechable propia dentro de una instancia temporal local, que se detuvo al terminar. La base indicada en el `.env` del proyecto no se utilizó para esas pruebas. En ese avance, sin conexión explícita de prueba se omitían los 11 casos SQL.
+
+La ampliación posterior está sustentada por [108 pruebas aprobadas](evidencias/persistencia_silver/validacion.json) y una [vista previa normalizada](evidencias/persistencia_silver/vista_previa.json). De ellas, 22 utilizaron PostgreSQL aislado, la instancia temporal se cerró. Se comprobaron inserción, repetición sin cambios, revisión de una fila, preservación de procedencia, detección de archivos alterados y rollback decidido por el coordinador. Sin conexión de prueba, la suite ampliada omite esos 22 casos.
+
+### 5.1. Ejecución de la validación y generación de evidencias
+
+Se preparó una instancia PostgreSQL temporal. El clúster se ubicó en `data/verification/`, escuchó en `127.0.0.1` con un puerto separado del servicio del proyecto y utilizó una cuenta de prueba. Cada caso SQL creó y eliminó su propia base `grain_test_<uuid>`, con datos ficticios para comprobar las operaciones y restricciones.
+
+Desde PowerShell se ejecutaron scripts auxiliares de Python que establecieron `TEST_DATABASE_URL` hacia esa instancia antes de cargar las pruebas. La selección se realizó con `unittest.defaultTestLoader.discover("tests")` y la ejecución con `unittest.TextTestRunner`. Se obtuvieron del resultado los casos ejecutados, fallos, errores, omisiones y aprobación global, se añadieron las versiones del entorno, la fecha UTC y el checksum del SQL calculado por `schema_resource()`.
+
+Los resultados se serializaron como JSON. La comprobación del preparador produjo `preparacion_postgres/validacion.json` con 83 pruebas aprobadas, la ampliación de persistencia produjo `persistencia_silver/validacion.json` con 108. Corresponden a dos verificaciones realizadas en momentos distintos del desarrollo. Los resúmenes conservados están vinculados en esta sección y documentan sus respectivos entornos y alcances.
+
+Para generar `persistencia_silver/vista_previa.json` se procesaron las cuatro capturas reales de observaciones conservadas en `docs/evidencias/perfilamiento_inicial/`. Los scripts invocaron `read_capture`, `get_series`, `read_observations` y `prepare_observations`, comprobaron los hashes contra el manifiesto y verificaron que las fechas fueran objetos `date` y los valores fueran `Decimal`. Se prepararon 30 observaciones y se conservaron sus referencias de origen. Al exportar el JSON, las fechas se expresaron mediante `isoformat()` y los decimales mediante `str()`, manteniendo sus dígitos.
+
+También se ejecutó el comando `python -X utf8 -m grain_pipeline.transformations.silver` para comprobar la vista previa en terminal. La normalización de las capturas archivadas se realizó en memoria, sin consultas nuevas a las APIs ni escritura de esos registros en la base del proyecto. La cobertura bancaria FIX permaneció identificada como pendiente.
+
+Al terminar las pruebas se cerró la instancia temporal. Los informes documentales se exportaron mediante scripts ejecutados en línea durante la sesión de PowerShell, esos generadores no quedaron incorporados como archivos `.py` reutilizables. Las pruebas y funciones invocadas forman parte del código del proyecto. Los archivos de `docs/evidencias/` son registros de esas ejecuciones y no una exportación automática de los comandos de preparación o vista previa.
 
 ## 6. Estado de las capas y cargas
 
 | Frente | Estado al corte |
 |---|---|
 | Bronze | Captura local de muestras implementada y comprobada con respuestas reales. |
-| Silver | SQL de catálogo y observaciones implementado y validado en entorno aislado; carga de observaciones pendiente. |
+| Silver | Preparación y escritura por captura implementadas y verificadas en entorno aislado, integración en el histórico completo pendiente. |
 | Gold | SQL de agregados y referencias implementado; certificación FIX y transformaciones pendientes. |
 | Carga histórica | Contrato de inicialización y publicación definido; periodo y proceso pendientes. |
 | Carga incremental | Contrato independiente definido, con requisito de histórico inicializado y revisión de periodos anteriores. Implementación pendiente. |
-| Persistencia y control | SQL y preparador transaccional comprobados en entorno aislado. Registro de cargas y preparación en la base del proyecto pendientes. |
+| Persistencia y control | Funciones de intentos, capturas, DQ y observaciones implementadas. Publicador completo y watermark pendientes. |
 | Visualización y automatización | Pendientes del modelo analítico, el paquete instalable y la programación del incremental. |
 
 La extracción de muestra es un diagnóstico de fuentes. Su terminación acredita ese recorrido y sus reglas actuales y la publicación de datos y el avance de watermarks corresponden a las futuras cargas.

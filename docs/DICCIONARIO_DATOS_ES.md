@@ -59,6 +59,8 @@ Los meses se completarán al determinar un intervalo. Ambos podrán permanecer n
 
 El archivo deberá existir y coincidir con su hash antes de considerarlo una entrada válida. Las respuestas de observaciones se conservarán antes de validar su contenido. Los metadatos seguirán conservando el registro recibido con sus textos, conforme al capturador implementado.
 
+Las funciones de registro comparan el hash y el contexto de una ruta existente. Una reutilización conserva el ID y la ejecución de captura originales, un archivo revisado debe tener una ruta nueva. Las rutas se interpretan respecto de la misma raíz Bronze configurada para la base.
+
 ## 5. core.observations
 
 **Granularidad:** una observación vigente. **PK:** `(provider, series_code, observation_date)`.
@@ -75,6 +77,9 @@ El archivo deberá existir y coincidir con su hash antes de considerarlo una ent
 | `updated_at` | `TIMESTAMPTZ` | No | Instante de inserción o última modificación. |
 
 La fecha de una serie mensual deberá ser el primer día del mes. La carga comprobará esta regla consultando la frecuencia del catálogo, así como la coincidencia de serie y tipo de captura. La FK a `source_capture_id` por sí sola no acredita esas coincidencias.
+
+La preparación Silver comprueba que la fecha de una serie mensual sea el primer día del mes. La escritura exige catálogo compatible, hash y contexto coincidentes, captura de observaciones e intervalo contenido en el intento planificado. La FK a `source_capture_id` por sí sola no acredita esas coincidencias.
+
 
 Ante una revisión se conservarán `created_run_id` y `created_at`, y se actualizarán valor, captura y campos de modificación. Una observación sin cambios conservará su fila y procedencia vigentes, el nuevo intento y su captura quedarán en `ops`.
 
@@ -94,6 +99,8 @@ Ante una revisión se conservarán `created_run_id` y `created_at`, y se actuali
 | `checked_at` | `TIMESTAMPTZ` | No | Instante de evaluación. |
 
 Las evaluaciones describirán su alcance: por ejemplo, una serie en un mes o las dependencias de todo el producto. Los decimales que aparezcan dentro de `details` se representarán como texto. Los resultados de una ejecución anterior se conservarán para la auditoría del intento.
+
+La persistencia del perfil recalcula las métricas desde la captura registrada y guarda los códigos aplicables con su ID de captura en `details`. La certificación diaria FIX se registra como `pending` hasta comprobar su calendario, las reglas exclusivamente mensuales se omiten para esa serie.
 
 ## 7. mart.fx_monthly
 

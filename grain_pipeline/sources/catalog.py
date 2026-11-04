@@ -69,3 +69,10 @@ SERIES = (
         "expected_metadata": BANXICO_FIX_METADATA,
     },
 )
+
+def get_series(provider: str, code: str) -> dict:
+    """Obtiene una definición conocida sin crear ni modificar entradas del catálogo."""
+    for series in SERIES:
+        if series["provider"] == provider and series["code"] == code:
+            return series
+    raise ValueError("La serie de la captura no pertenece al catálogo del proyecto.")

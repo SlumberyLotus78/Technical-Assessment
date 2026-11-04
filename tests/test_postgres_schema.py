@@ -12,50 +12,21 @@ from decimal import Decimal
 import io
 import os
 from pathlib import Path
-import re
 import tempfile
-import unittest
 from unittest.mock import patch
 from uuid import uuid4
 
 import psycopg
 from psycopg import sql
-from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 from grain_pipeline.persistence.catalog import prepare_catalog
 from grain_pipeline.persistence.initialize import main
 from grain_pipeline.persistence.schema import apply_schema, verify_schema
+from tests.postgres_support import PostgresTestCase
 
 
-TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
-
-
-@unittest.skipUnless(TEST_DATABASE_URL, "Requiere TEST_DATABASE_URL y una base de prueba dedicada.")
-class PostgresSchemaTests(unittest.TestCase):
+class PostgresSchemaTests(PostgresTestCase):
     """Comprueba SQL real, transacciones, repetición y restricciones de datos."""
-
-    def setUp(self):
-        # Validamos el destino antes de crear nada.
-        params = conninfo_to_dict(TEST_DATABASE_URL)
-        if not params.get("dbname", "").startswith("grain_test_"):
-            raise ValueError("La base de TEST_DATABASE_URL debe comenzar por grain_test_.")
-        self.admin = psycopg.connect(TEST_DATABASE_URL, autocommit=True)
-        self.addCleanup(self.admin.close)
-        self.database_name = "grain_test_" + uuid4().hex
-        # Identifier compone un nombre SQL, los valores de filas usarán %s.
-        self.admin.execute(sql.SQL("CREATE DATABASE {} TEMPLATE template0").format(
-            sql.Identifier(self.database_name)))
-        self.addCleanup(self.drop_test_database)
-        self.database_url = make_conninfo(TEST_DATABASE_URL, dbname=self.database_name)
-        self.connection = psycopg.connect(self.database_url)
-        self.addCleanup(self.connection.close)
-
-    def drop_test_database(self):
-        """Elimina exclusivamente la base UUID creada por este caso."""
-        if re.fullmatch(r"grain_test_[0-9a-f]{32}", self.database_name) is None:
-            raise ValueError("Nombre de limpieza de prueba incompatible.")
-        self.admin.execute(sql.SQL("DROP DATABASE {} WITH (FORCE)").format(
-            sql.Identifier(self.database_name)))
 
     def install(self):
         apply_schema(self.connection)

@@ -1,0 +1,234 @@
+{
+  "verified_at_utc": "2026-11-04T00:46:31.577871+00:00",
+  "source_run_id": "20261103T215523120075Z_7bb854f46f16499eb08a3e2a98098072",
+  "source_evidence_directory": "docs/evidencias/perfilamiento_inicial",
+  "python_types": {
+    "observation_date": "date",
+    "value": "Decimal"
+  },
+  "prepared_rows": 30,
+  "database_written": false,
+  "fix_publication_coverage": "pending_banking_calendar",
+  "datasets": [
+    {
+      "provider": "Banxico",
+      "series_code": "SF43718",
+      "unit": "MXN/USD",
+      "source_file": "banxico_SF43718_observations.json",
+      "source_sha256": "baa9120aab18944738c356b1bdad0e8e29165709a0495efcf316a65e5b8734b0",
+      "row_count": 21,
+      "records": [
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-01",
+          "value": "16.9755"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-02",
+          "value": "16.9852"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-03",
+          "value": "16.9560"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-04",
+          "value": "16.8748"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-07",
+          "value": "16.9237"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-08",
+          "value": "16.9202"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-09",
+          "value": "16.8947"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-10",
+          "value": "16.9722"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-11",
+          "value": "16.9707"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-14",
+          "value": "17.1277"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-15",
+          "value": "17.1527"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-17",
+          "value": "17.1872"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-18",
+          "value": "17.2450"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-21",
+          "value": "17.2203"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-22",
+          "value": "17.3015"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-23",
+          "value": "17.5030"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-24",
+          "value": "17.6425"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-25",
+          "value": "17.7100"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-28",
+          "value": "17.8413"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-29",
+          "value": "18.0710"
+        },
+        {
+          "provider": "Banxico",
+          "series_code": "SF43718",
+          "observation_date": "2026-09-30",
+          "value": "18.0692"
+        }
+      ]
+    },
+    {
+      "provider": "FRED",
+      "series_code": "PMAIZMTUSDM",
+      "unit": "USD/t",
+      "source_file": "fred_PMAIZMTUSDM_observations.json",
+      "source_sha256": "f21fa0e7a7d70bf6a7ab11c97fa3fab9777264bba0123d37c32722b31e96f738",
+      "row_count": 3,
+      "records": [
+        {
+          "provider": "FRED",
+          "series_code": "PMAIZMTUSDM",
+          "observation_date": "2026-07-01",
+          "value": "213.1901539821428"
+        },
+        {
+          "provider": "FRED",
+          "series_code": "PMAIZMTUSDM",
+          "observation_date": "2026-08-01",
+          "value": "221.3034955803572"
+        },
+        {
+          "provider": "FRED",
+          "series_code": "PMAIZMTUSDM",
+          "observation_date": "2026-09-01",
+          "value": "236.9161241071429"
+        }
+      ]
+    },
+    {
+      "provider": "FRED",
+      "series_code": "PSOYBUSDM",
+      "unit": "USD/t",
+      "source_file": "fred_PSOYBUSDM_observations.json",
+      "source_sha256": "d8e0150abb713f7f2e0ce71ce40aa48a49eb8f668c2148d0e1cd35132008fe50",
+      "row_count": 3,
+      "records": [
+        {
+          "provider": "FRED",
+          "series_code": "PSOYBUSDM",
+          "observation_date": "2026-07-01",
+          "value": "442.4505721529122"
+        },
+        {
+          "provider": "FRED",
+          "series_code": "PSOYBUSDM",
+          "observation_date": "2026-08-01",
+          "value": "449.043925962608"
+        },
+        {
+          "provider": "FRED",
+          "series_code": "PSOYBUSDM",
+          "observation_date": "2026-09-01",
+          "value": "481.7223363582059"
+        }
+      ]
+    },
+    {
+      "provider": "FRED",
+      "series_code": "PWHEAMTUSDM",
+      "unit": "USD/t",
+      "source_file": "fred_PWHEAMTUSDM_observations.json",
+      "source_sha256": "d9ae40e78e97aa3c20272f8eba1b626fe79b96afd137e120707736ff06cc190b",
+      "row_count": 3,
+      "records": [
+        {
+          "provider": "FRED",
+          "series_code": "PWHEAMTUSDM",
+          "observation_date": "2026-07-01",
+          "value": "228.73884495"
+        },
+        {
+          "provider": "FRED",
+          "series_code": "PWHEAMTUSDM",
+          "observation_date": "2026-08-01",
+          "value": "237.8554019809524"
+        },
+        {
+          "provider": "FRED",
+          "series_code": "PWHEAMTUSDM",
+          "observation_date": "2026-09-01",
+          "value": "246.85180245"
+        }
+      ]
+    }
+  ]
+}

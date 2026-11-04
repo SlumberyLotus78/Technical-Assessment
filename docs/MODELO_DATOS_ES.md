@@ -2,7 +2,7 @@
 
 ## 1. Estado y fundamento
 
-La creación de tablas y los procesos de persistencia se implementarán en el siguiente avance. Las entidades y garantías descritas aquí constituyen el contrato que deberá cumplir esa implementación.
+El SQL inicial y el preparador se validaron en una instancia aislada. Las funciones de registro operativo, preparación y escritura Silver están implementadas y probadas en entorno aislado. Las garantías de publicación descritas aquí siguen siendo el contrato para los coordinadores de carga hasta Gold.
 
 El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX. La muestra comprobó esos registros y la cobertura bancaria y el histórico completo permanecen pendientes.
 
@@ -44,6 +44,8 @@ La clave de `core.series` será `(provider, series_code)`. La clave de `core.obs
 Por ejemplo, `FRED / PMAIZMTUSDM / 2026-09-01` identifica una sola observación mensual de maíz. Una segunda extracción de ese registro deberá actualizar la misma fila si cambió su valor. Si el valor permanece igual, la fila vigente se conservará. El intento y su captura se registrarán de todas formas en `ops`.
 
 Se mantendrán la ejecución y el instante de creación de la fila, y la ejecución, captura e instante de su última modificación. Las capturas previas conservarán la evidencia de valores anteriores. La tabla Silver representará el estado vigente y la reconstrucción de versiones anteriores utilizará Bronze y los registros operativos.
+
+La función de escritura Silver ya aplica esta regla mediante una actualización condicionada al cambio del valor. Verifica catálogo, captura, hash, contexto e intervalo del intento antes de preparar y escribir. La [guía de persistencia Silver](GUIA_PERSISTENCIA_SILVER_ES.md) detalla las comprobaciones y los límites transaccionales.
 
 Las claves primarias evitan duplicados y las claves foráneas relacionan observaciones, catálogo y procedencia. Esas claves y las restricciones de fila están implementadas en el SQL inicial. Las reglas que requieren comparar conjuntos o consultar otras tablas se ejecutarán en la carga. [Restricciones de PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html).
 

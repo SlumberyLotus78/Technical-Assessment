@@ -134,6 +134,18 @@ The profile reports missing values, invalid formats, non-positive values, dates 
 
 Use `--output-dir PATH` to choose another sample root directory. The default `data/` directory is excluded from Git. A nonzero exit code indicates an error or a data quality finding that requires review.
 
+
+## Preview Silver Records
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -m grain_pipeline.transformations.silver
+```
+
+This command reads the latest complete sample under `data/bronze/samples/`, validates its observations, prepares dates and decimal values in memory, and displays the row counts. Use `--sample-dir PATH` to select a sample and `--bronze-root PATH` to specify its storage root.
+
+The [Silver preparation guide](docs/GUIA_PERSISTENCIA_SILVER_ES.md) describes record validation, capture integrity, persistence functions, and transaction boundaries.
+
+
 ## Tests
 
 Run the test suite:
@@ -142,7 +154,7 @@ Run the test suite:
 .\.venv\Scripts\python.exe -X utf8 -m unittest discover -s tests -v
 ```
 
-Configuration and API tests use fixtures and simulated responses. PostgreSQL integration tests require `TEST_DATABASE_URL` pointing to a dedicated database whose name begins with `grain_test_`, using an account with permission to create databases. Each integration case creates and removes its own `grain_test_<uuid>` database.
+Tests use fixtures, archived captures, and simulated API responses. PostgreSQL integration tests require `TEST_DATABASE_URL` pointing to a dedicated database whose name begins with `grain_test_`, using an account with permission to create databases. Each integration case creates and removes its own `grain_test_<uuid>` database
 
 Integration tests are skipped when `TEST_DATABASE_URL` is not set. Their connection is independent of the project database configured in `.env`. See the [PostgreSQL guide](docs/GUIA_POSTGRESQL_ES.md) for integration-test requirements.
 
