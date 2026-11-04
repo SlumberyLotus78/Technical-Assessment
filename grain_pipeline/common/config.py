@@ -34,3 +34,9 @@ def load_credentials(env_file: Path) -> dict[str, str]:
 def load_database_url(env_file: Path) -> str:
     """Obtiene la conexión privada; su interpretación corresponde a persistence."""
     return _load_required_values(env_file, ("DATABASE_URL",))["DATABASE_URL"]
+
+
+def load_dashboard_database_url(env_file: Path) -> str:
+    file_values = dotenv_values(env_file, encoding="utf-8-sig", interpolate=False)
+    name = "READONLY_DATABASE_URL" if "READONLY_DATABASE_URL" in os.environ or "READONLY_DATABASE_URL" in file_values else "DATABASE_URL"
+    return _load_required_values(env_file, (name,))[name]

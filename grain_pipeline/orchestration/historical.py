@@ -44,7 +44,7 @@ def run_historical(connection: psycopg.Connection, session: requests.Session, cr
         directory = bronze_root / "historical" / str(run_id)
         try:
             if read_watermark(connection) is not None:
-                raise ValueError("La base ya tiene un histórico publicado, este comando realiza la inicialización.")
+                raise ValueError("La base ya tiene un histórico publicado; este comando realiza la inicialización.")
             directory.mkdir(parents=True)
             stage, source_step = "extraction", "metadata"
             set_run_stage(connection, run_id, stage)
@@ -98,7 +98,7 @@ def main(argv=None) -> int:
             result = run_historical(connection, session, credentials, args.bronze_root,
                                     args.start_month, args.end_month, as_of=as_of)
     except ZoneInfoNotFoundError:
-        print("Faltan datos de zona horaria, instala requirements.txt.", file=sys.stderr)
+        print("Faltan datos de zona horaria; instala requirements.txt.", file=sys.stderr)
         return 1
     except psycopg.Error as error:
         print(database_error_message(error), file=sys.stderr)

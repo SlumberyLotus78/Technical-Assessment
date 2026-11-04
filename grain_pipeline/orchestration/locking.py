@@ -18,7 +18,7 @@ def product_publication_lock(connection: psycopg.Connection):
     acquired = acquire_product_lock(connection)
     connection.commit()  # Solo confirma la consulta que intentó obtener el bloqueo.
     if not acquired:
-        raise RuntimeError("El producto tiene otra ejecución en curso, no se inició la publicación.")
+        raise RuntimeError("El producto tiene otra ejecución en curso; no se inició la publicación.")
     try:
         yield
     finally:
