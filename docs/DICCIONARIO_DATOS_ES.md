@@ -2,7 +2,7 @@
 
 ## 1. Alcance y convenciones
 
-Este diccionario especifica las tablas propuestas en el [modelo de datos](MODELO_DATOS_ES.md). Su materialización SQL está pendiente. Las reglas que exceden una restricción de fila se implementarán en los procesos según el [catálogo DQ](REGLAS_CALIDAD_ES.md).
+Este diccionario especifica las ocho tablas del [modelo de datos](MODELO_DATOS_ES.md) y la tabla técnica de versiones añadida durante su implementación SQL. El recurso `persistence/sql/001_initial.sql` se comprobó en PostgreSQL, su preparación en la base del proyecto se realizará mediante el comando de inicialización. Las reglas que exceden una restricción de fila se implementarán en los procesos según el [catálogo DQ](REGLAS_CALIDAD_ES.md).
 
 `PK` identifica una clave primaria y `FK` una relación con otra tabla. Los componentes de una clave compuesta se interpretan juntos. Los identificadores `UUID` corresponden a ejecuciones, capturas y verificaciones técnicas. Los códigos de las fuentes conservan su valor público original.
 
@@ -145,3 +145,16 @@ Las entradas conservadas deberán coincidir con Silver y con el agregado FIX ref
 | `updated_at` | `TIMESTAMPTZ` | No | Instante de actualización del control. |
 
 Los dos meses deberán ser primeros de mes y estar ordenados. La fila existirá tras una inicialización histórica satisfactoria, una muestra o carga parcial no la crearán. La ejecución inicial deberá ser histórica y estar confirmada, condiciones que verificará el proceso junto con la integridad del intervalo publicado. Un reproceso dentro de ese intervalo conservará sus límites y registrará la ejecución de la nueva publicación.
+
+
+## 10. ops.schema_migrations
+
+**Granularidad:** una versión SQL aplicada. **PK:** `version`. Tabla técnica de preparación, adicional a las ocho entidades del modelo.
+
+| Campo | Tipo | Admite NULL | Significado |
+|---|---|---|---|
+| `version` | `TEXT` | No | Identificador del recurso aplicado, en esta etapa, `001_initial`. |
+| `checksum` | `TEXT` | No | SHA-256 del SQL con saltos de línea normalizados a LF. |
+| `applied_at` | `TIMESTAMPTZ` | No | Instante de la transacción que aplicó la versión. |
+
+El preparador confirma esta fila junto con las tablas y el catálogo. Una repetición comprueba la versión y el checksum, una diferencia detiene la operación. Las futuras modificaciones requerirán una nueva versión y su migración explícita. El SQL aplicado se conservará.

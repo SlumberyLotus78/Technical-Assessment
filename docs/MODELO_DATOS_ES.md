@@ -2,7 +2,7 @@
 
 ## 1. Estado y fundamento
 
- La creación de tablas y los procesos de persistencia se implementarán en el siguiente avance. Las entidades y garantías descritas aquí constituyen el contrato que deberá cumplir esa implementación.
+La creación de tablas y los procesos de persistencia se implementarán en el siguiente avance. Las entidades y garantías descritas aquí constituyen el contrato que deberá cumplir esa implementación.
 
 El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX. La muestra comprobó esos registros y la cobertura bancaria y el histórico completo permanecen pendientes.
 
@@ -18,6 +18,7 @@ El detalle de campos se encuentra en el [diccionario de datos](DICCIONARIO_DATOS
 | Gold: tipo de cambio | `mart.fx_monthly` | Un mes de una serie FIX con cobertura validada. |
 | Gold: referencias | `mart.grain_reference_monthly` | Un mes de un grano, con entradas de cálculo y referencia en MXN/t. |
 | Control | `ops.runs`, `ops.dq_results`, `ops.watermarks` | Una ejecución, sus verificaciones y el avance publicado del producto. |
+| Versión SQL | `ops.schema_migrations` | Una versión del esquema aplicada, control técnico adicional a las ocho entidades del modelo. |
 
 Bronze conserva el contenido de origen en archivos. El registro de capturas en PostgreSQL permitirá localizar cada archivo y verificar su integridad. Silver contiene valores tipados y validados. Gold relaciona las frecuencias mediante el mes. Los esquemas organizan las tablas por función, las carpetas Python continuarán separando consulta, reglas, transformación, persistencia y coordinación.
 
@@ -44,7 +45,7 @@ Por ejemplo, `FRED / PMAIZMTUSDM / 2026-09-01` identifica una sola observación 
 
 Se mantendrán la ejecución y el instante de creación de la fila, y la ejecución, captura e instante de su última modificación. Las capturas previas conservarán la evidencia de valores anteriores. La tabla Silver representará el estado vigente y la reconstrucción de versiones anteriores utilizará Bronze y los registros operativos.
 
-Las claves primarias evitan duplicados y las claves foráneas relacionan observaciones, catálogo y procedencia. Las reglas que requieren comparar conjuntos o consultar otras tablas se ejecutarán en la carga, las restricciones de fila y las relaciones se reforzarán en SQL. [Restricciones de PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html).
+Las claves primarias evitan duplicados y las claves foráneas relacionan observaciones, catálogo y procedencia. Esas claves y las restricciones de fila están implementadas en el SQL inicial. Las reglas que requieren comparar conjuntos o consultar otras tablas se ejecutarán en la carga. [Restricciones de PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html).
 
 ## 4. Fechas, unidades y precisión
 

@@ -35,10 +35,10 @@ Las consultas extensas deberán comprobarse en conjunto, incluidos límites de f
 | `LIN-01` | Captura íntegra y vinculada a su serie y ejecución. | Captura local implementada, registro SQL y comprobación operativa de hash pendientes. | Archivo existente, SHA-256 coincidente y correspondencia entre observación, serie y captura de tipo `observations`. |
 | `PUB-01` | Dependencias mensuales completas. | Pendiente. | Por cada mes, tres precios de granos y un agregado FIX con todas sus reglas obligatorias aprobadas. |
 | `PUB-02` | Cálculos y unidades coherentes. | Pendiente. | Media FIX, conversión y variaciones reproducibles con la política decimal del modelo, entradas iguales a las fuentes validadas. |
-| `PUB-03` | Claves, referencias y tipos compatibles con el diccionario. | Pendiente de SQL y cargas. | PK, FK, campos obligatorios y restricciones de fila, además de las verificaciones de contexto del proceso. |
+| `PUB-03` | Claves, referencias y tipos compatibles con el diccionario. | Restricciones SQL implementadas y verificadas en PostgreSQL aislado, integración con cargas pendiente. | PK, FK, campos obligatorios y restricciones de fila, además de las verificaciones de contexto del proceso. |
 | `PUB-04` | Reejecución sin duplicaciones y tratamiento de revisiones. | Pendiente. | Una fila vigente por clave, actualizaciones de valores revisados, conservación de procedencia previa y recálculo de Gold dependiente. |
 
-Las restricciones SQL reforzarán campos obligatorios, claves y condiciones que dependen de una fila. Las reglas de cobertura, identidad de la captura y consistencia entre entradas y resultados se aplicarán en funciones de carga. No se atribuirá a una FK o a un conteo una garantía que necesita esas verificaciones adicionales.
+Las restricciones SQL implementadas refuerzan campos obligatorios, claves y condiciones que dependen de una fila. Las reglas de cobertura, identidad de la captura y consistencia entre entradas y resultados se aplicarán en funciones de carga. No se atribuirá a una FK o a un conteo una garantía que necesita esas verificaciones adicionales. La [evidencia SQL](evidencias/preparacion_postgres/validacion.json) corresponde a bases de prueba aisladas.
 
 Los precios, el FIX y las referencias deberán ser finitos y positivos. Las variaciones porcentuales deberán ser finitas cuando existan, admiten cero y valores negativos, y serán nulas cuando el comparador quede fuera del histórico publicado.
 
@@ -48,8 +48,8 @@ Los precios, el FIX y las referencias deberán ser finitos y positivos. Las vari
 |---|---|---|---|
 | `CTL-01` | Histórico completo antes del primer incremental. | Pendiente. | Watermark creado por un histórico confirmado hasta Gold, con intervalo continuo publicado. |
 | `CTL-02` | Meses cerrados y avance sustentado. | Selección de muestra implementada, publicación pendiente. | Corte compatible con fuentes y fecha de operación, avance solo por meses con todas las dependencias y controles aprobados. |
-| `CTL-03` | Publicación atómica. | Pendiente. | Silver, Gold, watermark y estado `succeeded` se confirman juntos.  Ante fallo se conserva el último estado publicado. 
-| `CTL-04` | Publicaciones serializadas y recuperación trazable. | Pendiente. | Bloqueo del mismo producto y registro durable del intento, sus verificaciones y su eventual fallo. |
+| `CTL-03` | Publicación atómica. | Preparación SQL atómica verificada, publicador de cargas pendiente. | Silver, Gold, watermark y estado `succeeded` se confirman juntos, ante fallo se conserva el último estado publicado. |
+| `CTL-04` | Publicaciones serializadas y recuperación trazable. | Bloqueo de preparación SQL implementado, bloqueo y recuperación de cargas pendientes. | Bloqueo del mismo producto y registro durable del intento, sus verificaciones y su eventual fallo. |
 
 Las dos modalidades de carga invocarán las mismas reglas y transformaciones. Cada una tendrá su propio comando y condiciones de inicio. Un incremental sin trabajo podrá registrarse como `skipped`, siempre que haya comprobado su inicialización, y conservará el watermark existente.
 
