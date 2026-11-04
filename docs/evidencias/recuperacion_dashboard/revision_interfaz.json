@@ -1,0 +1,11 @@
+{
+  "automatic_interface_review": "passed: Streamlit AppTest and isolated PostgreSQL",
+  "browser_visual_review_completed": false,
+  "browser_stop_reason": "Computer Use could not determine the current browser URL on Windows with enough confidence to enforce policy.",
+  "preview_dataset": "33 synthetic published months, 2024-01 through 2026-09",
+  "temporary_dashboard_stopped": true,
+  "temporary_preview_database_removed": true,
+  "temporary_postgres_cluster_stopped": true,
+  "project_database_written": false,
+  "real_environment_file_read": false
+}
