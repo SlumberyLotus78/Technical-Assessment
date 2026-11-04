@@ -1,39 +1,39 @@
 # Plan de implementación: BANXICO FIX - FRED. Influencia del tipo de cambio en el precio de los granos
 
-Este documento conserva la propuesta inicial del proyecto. Sus etapas expresan el trabajo previsto, no una lista de pendientes actuales. Lo realizado y sus verificaciones se registran en el [proceso de implementación](docs/Implementación_proceso.md) y la [validación final](docs/VALIDACION_FINAL_ES.md).
+Este documento describe el alcance, la organización y los criterios de aceptación de la entrega. Los componentes implementados se detallan en el [proceso de implementación](docs/Implementación_proceso.md).
 
 ## 1. Propósito y objetivo
 
-Este documento presenta una propuesta inicial para organizar el desarrollo del proyecto. Los detalles de las fuentes, las reglas específicas y los parámetros de operación se definirán durante las etapas correspondientes.
+Las fuentes, las reglas de calidad y los parámetros de operación se documentan en el modelo de datos, el catálogo DQ y el runbook.
 
-El objetivo será integrar precios internacionales de maíz, trigo y soya con el tipo de cambio FIX para analizar su referencia mensual en pesos mexicanos.
+El objetivo es integrar precios internacionales de maíz, trigo y soya con el tipo de cambio FIX para analizar su referencia mensual en pesos mexicanos.
 
-La pregunta que orientará el análisis será: 
+La pregunta que orienta el análisis es:
 
 **¿Cómo influyen el precio internacional y el tipo de cambio en la evolución de las referencias de estos granos en pesos?**
 
-Se buscará expresar los precios en una frecuencia y unidad comunes. La referencia resultante servirá para el análisis, su interpretación deberá considerar los componentes adicionales de una compra real, como transporte y condiciones comerciales.
+Se expresan los precios en una frecuencia y unidad comunes. La referencia resultante sirve para el análisis, su interpretación considera los componentes adicionales de una compra real, como transporte y condiciones comerciales.
 
-## 2. Alcance previsto
+## 2. Alcance de la entrega
 
 - Consultar dos fuentes mediante sus APIs: FRED para precios de granos y Banxico para el FIX.
 - Desarrollar en Python los procesos de extracción, validación y transformación.
 - Conservar los datos originales y preparar registros consistentes para su almacenamiento.
 - Almacenar observaciones y resultados analíticos en PostgreSQL.
-- Implementar primero una carga histórica y después una actualización incremental independiente.
-- Construir dos o tres visualizaciones conectadas a la base de datos.
+- Ejecutar el histórico y el incremental mediante comandos independientes.
+- Construir tres visualizaciones conectadas a la base de datos.
 - Preparar la automatización del incremental mediante un paquete instalable.
-- Documentar la ejecución, las decisiones y los resultados que se obtengan.
+- Documentar la ejecución, las decisiones y los resultados obtenidos.
 
-El periodo de análisis se definirá al revisar la disponibilidad y compatibilidad de las fuentes.
+El producto comprende 2009-01 a 2026-09; el informe analítico compara 2010-01 a 2026-09.
 
-## 3. Propuesta técnica y organización
+## 3. Solución técnica y organización
 
-Se propone utilizar Python para la integración, PostgreSQL para la persistencia y Streamlit con Plotly para la consulta visual. Las dependencias y sus versiones se documentarán al preparar cada componente.
+Se utiliza Python para la integración, PostgreSQL para la persistencia y Streamlit con Plotly para la consulta visual. Las dependencias se declaran en `requirements.txt` y `pyproject.toml`.
 
-El código se organizará por responsabilidad, utilizando funciones con nombres descriptivos. Las reglas de calidad tendrán módulos propios y serán invocadas desde los procesos que las necesiten. Las transformaciones compartidas tendrán una implementación reutilizable.
+El código se organiza por responsabilidad, utilizando funciones con nombres descriptivos. Las reglas de calidad tienen módulos propios y son invocadas desde los procesos que las necesiten. Las transformaciones compartidas tienen una implementación reutilizable.
 
-La estructura general propuesta será:
+La estructura del proyecto es:
 
 ```text
 grain_pipeline/
@@ -51,7 +51,7 @@ tests/                  Pruebas
 docs/                   Documentación y notas
 ```
 
-Las carpetas se incorporarán conforme se implemente cada responsabilidad. Las abstracciones adicionales se introducirán cuando resuelvan una necesidad concreta y mantengan el código comprensible.
+Cada paquete concentra una responsabilidad y utiliza las funciones compartidas de configuración, fechas y precisión decimal.
 
 ## 4. Capas de datos
 
@@ -61,31 +61,31 @@ Las carpetas se incorporarán conforme se implemente cada responsabilidad. Las a
 | Silver | Preparar observaciones con tipos, fechas, unidades y claves consistentes, aplicando reglas de calidad. |
 | Gold | Integrar las fuentes en una frecuencia común y producir referencias, variaciones e indicadores para el análisis. |
 
-Los controles operativos permitirán relacionar cada ejecución con sus entradas, su resultado y el avance de la carga.
+Los controles operativos permiten relacionar cada ejecución con sus entradas, su resultado y el avance de la carga.
 
 ## 5. Cargas y automatización
 
 ### Carga histórica
 
-Se ejecutará de forma explícita para un periodo definido con el objetivo de inspeccionar los datos, evaluar su calidad y establecer la carga inicial hasta Gold. Su publicación satisfactoria establecerá el estado desde el que podrá continuar el incremental.
+Se ejecuta de forma explícita para un periodo definido con el objetivo de inspeccionar los datos, evaluar su calidad y establecer la carga inicial hasta Gold. Su publicación satisfactoria establece el estado desde el que continúa el incremental.
 
 ### Carga incremental
 
-Tendrá un proceso y un comando independientes, utilizando el estado de carga para determinar qué información consultar y actualizar. Requerirá una carga inicial completa y recorrerá las transformaciones necesarias hasta Gold.
+Tiene un proceso y un comando independientes, utilizando el estado de carga para determinar qué información consultar y actualizar. Requiere una carga inicial completa y recorre las transformaciones necesarias hasta Gold.
 
-Ambas cargas compartirán las reglas de calidad y las transformaciones. Se contemplarán mecanismos para tratar datos repetidos, revisiones de origen e interrupciones, conservando la trazabilidad.
+Ambas cargas comparten las reglas de calidad y las transformaciones. Se incluyen mecanismos para tratar datos repetidos, revisiones de origen e interrupciones, conservando la trazabilidad.
 
 ### Control y ejecución programada
 
-Se utilizarán logs para registrar las ejecuciones, incluidos sus errores, y watermarks para conservar el avance. Los watermarks avanzarán únicamente cuando la publicación correspondiente se complete correctamente.
+Se utilizan logs para registrar las ejecuciones, incluidos sus errores, y watermarks para conservar el avance. Los watermarks avanzan únicamente cuando la publicación correspondiente se completa correctamente.
 
-La ejecución programada invocará el incremental mediante un paquete Python distribuible como wheel. La preparación histórica será una operación separada. El mecanismo y la frecuencia de programación se definirán al preparar la automatización.
+La ejecución programada invoca el incremental mediante un paquete Python distribuible como wheel. La preparación histórica es una operación separada. El Programador de tareas de Windows configura una ejecución diaria a las 20:00 de Ciudad de México.
 
-## 6. Etapas de trabajo
+## 6. Organización del trabajo
 
-| Etapa | Trabajo previsto | Entregable esperado |
+| Etapa | Trabajo | Entregable |
 |---|---|---|
-| 1. Definición | Precisar la pregunta, el alcance y las fuentes candidatas. | README y plan inicial. |
+| 1. Definición | Precisar la pregunta, el alcance y las fuentes candidatas. | README y plan de implementación. |
 | 2. Entorno | Preparar Python, dependencias, configuración privada y organización del código. | Entorno reproducible y estructura inicial. |
 | 3. Exploración de fuentes | Revisar documentación, autenticación, metadatos y muestras. | Contratos de entrada y notas de exploración. |
 | 4. Modelo y calidad | Definir las claves, el almacenamiento, los controles y las validaciones. | Modelo de datos y reglas DQ modulares. |
@@ -95,25 +95,23 @@ La ejecución programada invocará el incremental mediante un paquete Python dis
 | 8. Automatización | Empaquetar el código y programar la actualización. | Wheel y ejecución incremental programada. |
 | 9. Validación y entrega | Comprobar el conjunto y documentar su reproducción. | Pruebas y documentación. |
 
-Cada etapa incluirá una comprobación apropiada antes de continuar con los componentes que dependan de ella.
+Las verificaciones de la entrega se describen en el [catálogo de pruebas](docs/CATALOGO_PRUEBAS_ES.md).
 
 ## 7. Criterios generales de aceptación
 
-- Las dos fuentes podrán consultarse con autenticación y manejo de errores.
-- Las credenciales se mantendrán en configuración privada y fuera del repositorio.
-- Las validaciones cubrirán tipos, fechas, valores ausentes, duplicados y cobertura temporal.
-- Las fuentes podrán relacionarse mediante claves y periodos claramente definidos.
-- La repetición de una carga conservará la consistencia de los datos y evitará duplicaciones.
-- El histórico y el incremental podrán ejecutarse por separado, utilizando las mismas transformaciones hasta Gold.
-- Los logs y watermarks permitirán conocer el resultado y el avance de las ejecuciones.
-- Las visualizaciones consultarán la base de datos y explicarán unidades, periodos y alcance de los indicadores.
-- El paquete y las instrucciones permitirán reproducir la operación en un entorno preparado.
-- Las pruebas distinguirán los casos simulados de las comprobaciones realizadas con APIs y PostgreSQL.
+- Las dos fuentes se consultan con autenticación y manejo de errores.
+- Las credenciales se mantienen en configuración privada y fuera del repositorio.
+- Las validaciones cubren tipos, fechas, valores ausentes, duplicados y cobertura temporal.
+- Las fuentes se relacionan mediante claves y periodos claramente definidos.
+- La repetición de una carga conserva la consistencia de los datos y evita duplicaciones.
+- El histórico y el incremental se ejecutan por separado, utilizando las mismas transformaciones hasta Gold.
+- Los logs y watermarks permiten conocer el resultado y el avance de las ejecuciones.
+- Las visualizaciones consultan la base de datos y explican unidades, periodos y alcance de los indicadores.
+- El paquete y las instrucciones permiten reproducir la operación en un entorno preparado.
+- Las pruebas distinguen los casos simulados de las comprobaciones realizadas con APIs y PostgreSQL.
 
 ## 8. Documentación y seguimiento
 
-Se mantendrán instrucciones de preparación y ejecución, un diccionario de datos y notas de las decisiones técnicas. La entrega incluirá evidencias y hallazgos sustentados en los datos para apoyar la explicación técnica del proyecto.
+La entrega incluye instrucciones de preparación y ejecución, modelo de datos, diccionario, reglas de calidad, catálogo de pruebas, evidencias y resultados analíticos. La [justificación del diseño](Entregables/Justificacion_dise%C3%B1o.md) explica las decisiones técnicas y reúne las capturas del dashboard.
 
-El trabajo avanzará mediante commits asociados a cambios comprensibles y comprobados. Las decisiones concretas, las mediciones y las evidencias se registrarán en notas de implementación y reportes de validación conforme se produzcan.
-
-El README declarará el apoyo de herramientas de IA y reconocerá las fuentes utilizadas.
+El [proceso de implementación](docs/Implementación_proceso.md) relaciona los componentes con sus commits. El README reconoce las fuentes y el apoyo de herramientas de IA.

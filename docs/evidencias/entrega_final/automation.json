@@ -1,5 +1,5 @@
 ﻿{
-    "task_name":  "GrainPipelineLearningIncremental",
+    "task_name":  "GrainPipelineIncremental",
     "registered":  true,
     "state":  "Ready",
     "daily_at_local":  "20:00",

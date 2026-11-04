@@ -1,15 +1,14 @@
 {
-  "verified_at_utc": "2026-11-04T05:43:10.556926+00:00",
   "python_version": "3.12.4",
   "postgresql_version": "18.6",
   "postgres_requested": true,
-  "tests_run": 254,
+  "tests_run": 259,
   "failures": 0,
   "errors": 0,
   "skipped": 0,
   "successful": true,
   "postgres_tests_executed": 91,
-  "offline_tests_executed": 163,
+  "offline_tests_executed": 168,
   "executed_postgres_cases": [
     "test_postgres_dashboard.PostgresDashboardTests.test_a_select_only_login_can_read_the_dashboard",
     "test_postgres_dashboard.PostgresDashboardTests.test_corrupt_gold_is_reported_instead_of_plotting_partial_or_wrong_values",
@@ -105,9 +104,6 @@
   ],
   "project_database_written": false,
   "api_requests_made": false,
-  "environment": "isolated_local_test_cluster_with_simulated_http",
-  "temporary_cluster_stopped": true,
-  "streamlit_version": "1.66.1",
-  "plotly_version": "7.1.0",
-  "real_source_data_loaded": false
+  "report_type": "test_results_summary",
+  "source_report": "docs/evidencias/entrega_final/resumen_pruebas.json"
 }

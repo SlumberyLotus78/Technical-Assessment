@@ -44,6 +44,8 @@ La atribución simétrica reparte por igual la interacción entre precio y FIX. 
 
 La [metodología del dashboard](ANALISIS_Y_DASHBOARD_ES.md) documenta las fórmulas, el tratamiento de ausencias y los límites de interpretación.
 
+Las capturas de la aplicación incluidas en la entrega se encuentran en [Entregables/Capturas](../Entregables/Capturas). Su periodo y sus resultados se explican en la [justificación del diseño](../Entregables/Justificacion_dise%C3%B1o.md).
+
 ## 6. Reproducción del análisis
 
 ```powershell

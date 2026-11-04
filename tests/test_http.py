@@ -8,20 +8,16 @@ import requests
 from grain_pipeline.clients.http import BASE_URLS, TIMEOUT, request_json
 
 
-# Credenciales ficticias: permiten comprobar dónde se colocan los valores.
 CREDENTIALS = {"FRED_API_KEY": "fixture-fred-key", "BANXICO_TOKEN": "fixture-banxico-token"}
 
 
 def make_session(payload=None, status=200, content_type="application/json"):
     """Prepara los objetos simulados que necesita el escenario."""
-    # Mock registra las llamadas y permite definir sus resultados.
     response = Mock()
     response.status_code = status
     response.headers = {"Content-Type": content_type}
     response.json.return_value = {} if payload is None else payload
-    # spec limita los nombres disponibles a los de una Session de requests.
     session = Mock(spec=requests.Session)
-    # Cuando el cliente llame a get, recibirá nuestra respuesta simulada.
     session.get.return_value = response
     return session, response
 
@@ -37,7 +33,6 @@ class HttpClientTests(unittest.TestCase):
         result = request_json(session, "FRED", "series", params, CREDENTIALS)
 
         self.assertEqual(result, payload)
-        # Verificamos los argumentos exactos entregados a la sesión simulada.
         session.get.assert_called_once_with(
             BASE_URLS["FRED"] + "series",
             params={**params, "api_key": CREDENTIALS["FRED_API_KEY"]},
@@ -63,7 +58,6 @@ class HttpClientTests(unittest.TestCase):
         response.close.assert_called_once()
 
     def test_http_errors_release_response_and_exclude_private_body(self):
-        # subTest permite recorrer variantes conservando su identificación si fallan.
         for status in (302, 400, 401, 403, 429, 503):
             with self.subTest(status=status):
                 session, response = make_session({"error": CREDENTIALS["FRED_API_KEY"]}, status=status)
@@ -80,7 +74,6 @@ class HttpClientTests(unittest.TestCase):
         for error_type in (requests.Timeout, requests.ConnectionError):
             with self.subTest(error_type=error_type.__name__):
                 session, _ = make_session()
-                # side_effect hace que la llamada simulada lance una excepción.
                 session.get.side_effect = error_type("fixture URL with " + CREDENTIALS["FRED_API_KEY"])
                 with self.assertRaises(RuntimeError) as error:
                     request_json(session, "FRED", "series", {}, CREDENTIALS, max_attempts=1)

@@ -8,7 +8,7 @@ Los calendarios revisados cubren 2009-2026. Antes de publicar datos de un nuevo 
 
 ## 2. Comprobar y ejecutar
 
-Desde la raí del repositorio:
+Desde la raíz del repositorio:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File scripts/run_incremental.ps1 -CheckOnly
@@ -17,13 +17,13 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File scripts/run_increm
 
 El primer comando solo consulta el producto. El segundo consulta fuentes y puede publicar una revisión o meses nuevos. Un `succeeded` con cero escrituras de hechos es correcto cuando la revisión no encuentra cambios. Con revisión cero y sin meses seleccionados puede cerrar `skipped`.
 
-En el entorno de origen, el Control de aplicaciones bloqueó los lanzadores `.exe` de pip. Los scripts anteriores utilizan el Python permitido con `-I -X utf8 -m`. Para otros comandos instalados se utiliza el mismo patrón, por ejemplo `.\.venv-automation\Scripts\python.exe -I -X utf8 -m grain_pipeline.orchestration.recovery --run-id UUID --env-file .env`. No es necesario modificar la política de seguridad.
+Los scripts utilizan el intérprete instalado con `-I -X utf8 -m`. Para otros comandos del paquete se utiliza el mismo patrón, por ejemplo `.\.venv-automation\Scripts\python.exe -I -X utf8 -m grain_pipeline.orchestration.recovery --run-id UUID --env-file .env`.
 
 ## 3. Revisar la tarea y los logs
 
 ```powershell
-Get-ScheduledTask -TaskName GrainPipelineLearningIncremental
-Get-ScheduledTaskInfo -TaskName GrainPipelineLearningIncremental
+Get-ScheduledTask -TaskName GrainPipelineIncremental
+Get-ScheduledTaskInfo -TaskName GrainPipelineIncremental
 Get-ChildItem data/logs/scheduler | Sort-Object LastWriteTime -Descending | Select-Object -First 10
 ```
 
@@ -55,16 +55,16 @@ ORDER BY checked_at DESC LIMIT 30;
 | Captura ausente o hash distinto | Restaurar el original verificado desde su respaldo, no editar el registro para ocultar la diferencia. |
 | Año bancario sin referencia | Revisar e incorporar el recurso anual antes de volver a publicar ese año. |
 
-La [guía de recuperación](GUIA_RECUPERACION_Y_REPROCESOS_ES.md) define los comandos y el tratamiento de capturas completas, incompletas y anteriores a otra publicación. Un resultado `retry_required` requiere la extracción indicada, no se eliminan logs ni watermarks para reiniciar. Los reintentos del programador ejecutan el incremental de nuevo, la recuperación de un intento concreto requiere una decisión explícita del operador.
+Un resultado `retry_required` requiere la extracción indicada, no se eliminan logs ni watermarks para reiniciar. Los reintentos del programador ejecutan el incremental de nuevo, la recuperación de un intento concreto requiere una decisión explícita del operador.
 
-## 5. Actualizar una versión
+## 5. Mantenimiento del paquete
 
 Deshabilitar primero la tarea durante una ventana de mantenimiento, construir y verificar el nuevo wheel, instalarlo en un entorno preparado y comprobar su estado contra las mismas rutas Bronze. Conservar el artefacto anterior para poder reinstalarlo si la comprobación falla. Una actualización del paquete no reemplaza los originales ni modifica el esquema implícitamente. Deshabilitar la tarea impide nuevos disparos, pero no detiene una ejecución ya activa: comprobar su cierre antes de cambiar el entorno instalado.
 
 ```powershell
-Disable-ScheduledTask -TaskName GrainPipelineLearningIncremental
-# Instalar y verificar la versión elegida conforme a la guía de automatización.
-Enable-ScheduledTask -TaskName GrainPipelineLearningIncremental
+Disable-ScheduledTask -TaskName GrainPipelineIncremental
+# Instalar y verificar el paquete.
+Enable-ScheduledTask -TaskName GrainPipelineIncremental
 ```
 
 Los scripts de registro no sobrescriben tareas existentes. Si cambian las rutas de despliegue, se debe revisar y actualizar la definición concreta durante esa ventana.
@@ -77,4 +77,4 @@ Los logs del scheduler y las capturas son acumulativos. Su archivado debe preser
 
 ## 7. Consulta visual y entrega
 
-El dashboard usa consultas de solo lectura y muestra exclusivamente el intervalo confirmado. Desde el checkout se abre con el comando Streamlit del [README](../README.MD). En el entorno del wheel requiere el extra `dashboard`, en este equipo se usa `.\.venv-automation\Scripts\python.exe -I -X utf8 -m app.launcher --env-file .env` por el bloqueo de los lanzadores `.exe`. Los resultados exportados y su interpretación están en [RESULTADOS_ANALISIS_ES.md](RESULTADOS_ANALISIS_ES.md).
+El dashboard usa consultas de solo lectura y muestra exclusivamente el intervalo confirmado. Desde el checkout se abre con el comando Streamlit del [README](../README.md). En el entorno del wheel requiere el extra `dashboard`, en este equipo se usa `.\.venv-automation\Scripts\python.exe -I -X utf8 -m app.launcher --env-file .env` por el bloqueo de los lanzadores `.exe`. Los resultados exportados y su interpretación están en [RESULTADOS_ANALISIS_ES.md](RESULTADOS_ANALISIS_ES.md).

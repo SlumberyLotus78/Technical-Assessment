@@ -6,7 +6,7 @@ Este catálogo relaciona los controles de exploración con las validaciones del 
 
 La columna de implementación describe los controles disponibles en el código. Los estados `passed`, `failed` y `pending` describen el resultado de una evaluación, no el avance de desarrollo de una regla. Por ejemplo, el perfil de muestra deja pendiente la cobertura bancaria porque solo diagnostica filas, la regla mensual DQ-09 está implementada y exige un calendario revisado antes de publicar.
 
-La persistencia del perfil genera códigos en `ops.dq_results.rule_code`, vinculados a captura e intento. Ambos coordinadores integran extracción y publicador, con controles por ventana y del conjunto completo. Las guías de [histórico](GUIA_CARGA_HISTORICA_ES.md), [incremental](GUIA_CARGA_INCREMENTAL_ES.md) y [publicación Gold](GUIA_PUBLICACION_GOLD_ES.md) documentan sus funciones y pruebas.
+La persistencia del perfil genera códigos en `ops.dq_results.rule_code`, vinculados a captura e intento. Ambos coordinadores integran extracción y publicador, con controles por ventana y del conjunto completo.
 
 ## 2. Fuentes y registros
 
@@ -39,7 +39,7 @@ Las consultas se dividen en años calendario. Cada serie FRED mensual requiere c
 | `PUB-03` | Claves, referencias y tipos compatibles con el diccionario. | Restricciones SQL y verificaciones del publicador integradas y probadas en PostgreSQL aislado. | PK, FK, campos obligatorios y restricciones de fila, además de las verificaciones de contexto del proceso. |
 | `PUB-04` | Reejecución sin duplicaciones y tratamiento de revisiones. | Escritura condicionada al cambio en Silver y Gold, revisiones y variaciones dependientes verificadas. | Una fila vigente por clave, actualizaciones de valores revisados, conservación de procedencia previa y recálculo de Gold dependiente. |
 
-Las restricciones SQL implementadas refuerzan campos obligatorios, claves y condiciones que dependen de una fila. Las funciones de carga aplican además las reglas de cobertura, identidad de la captura y consistencia entre entradas y resultados. Una FK o un conteo no sustituyen esas verificaciones. La [evidencia SQL inicial](evidencias/preparacion_postgres/validacion.json) y la [validación final](VALIDACION_FINAL_ES.md) identifican sus respectivas pruebas en bases aisladas.
+Las restricciones SQL implementadas refuerzan campos obligatorios, claves y condiciones que dependen de una fila. Las funciones de carga aplican además las reglas de cobertura, identidad de la captura y consistencia entre entradas y resultados. Una FK o un conteo no sustituyen esas verificaciones. El [catálogo de pruebas](CATALOGO_PRUEBAS_ES.md) y el [resumen de resultados](evidencias/entrega_final/resumen_pruebas.json) documentan los casos en bases aisladas.
 
 Los precios, el FIX y las referencias deben ser finitos y positivos. Las variaciones porcentuales deben ser finitas cuando existen, admiten cero y valores negativos, y son nulas cuando el comparador queda fuera del histórico publicado.
 
@@ -65,4 +65,4 @@ Los resultados de las reglas son `passed`, `failed` o `pending`. Un resultado ob
 
 Los intentos conservan sus capturas y métricas para explicar el resultado. Los mensajes de error se construyen con identificadores públicos y datos operativos, sin incluir valores de credenciales. Las verificaciones se repiten al reprocesar datos revisados.
 
-El perfil inicial conserva `DQ-09` pendiente como registro de esa exploración. La [comprobación mensual posterior](evidencias/calendario_gold/vista_previa.json) aprobó la muestra real de septiembre de 2026 en memoria. La [verificación del publicador](evidencias/publicacion_gold/validacion.json) comprobó después las transacciones con datos ficticios. Se confirmó la ejecución histórica real con los resultados esperados. La [evidencia incremental](evidencias/carga_incremental/validacion.json) registra la ampliación técnica de pruebas con HTTP simulado, cada ejecución real conserva sus propias capturas y controles.
+El perfil por captura registra `DQ-09` como `pending` porque el diagnóstico de filas no certifica el calendario. La [comprobación mensual Gold](evidencias/calendario_gold/vista_previa.json) certifica las 21 fechas FIX de septiembre de 2026. El publicador exige cobertura bancaria aprobada para cada mes y aplica los controles de integridad, continuidad y conciliación antes de confirmar el producto. El [catálogo de pruebas](CATALOGO_PRUEBAS_ES.md) describe los casos de publicación e incremental con PostgreSQL y HTTP simulado; cada carga real conserva sus propias capturas y controles.

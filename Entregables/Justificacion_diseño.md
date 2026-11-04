@@ -32,7 +32,7 @@ flowchart TD
 
 ### Diseño de la arquitectura
 
-Se separo la conservación de las respuestas, la publicación de datos válidos y la consulta analítica. Ambas fuentes se consultan mediante APIs JSON. Bronze conserva el contenido JSON interpretado y el contexto de extracción, incluidos los textos numéricos originales. Cada captura registrada tiene una ruta y un SHA-256 que permite comprobar su integridad.
+Se separó la conservación de las respuestas, la publicación de datos válidos y la consulta analítica. Ambas fuentes se consultan mediante APIs JSON. Bronze conserva el contenido JSON interpretado y el contexto de extracción, incluidos los textos numéricos originales. Cada captura registrada tiene una ruta y un SHA-256 que permite comprobar su integridad.
 
 Las funciones Python validan los contratos de las fuentes y preparan fechas y valores decimales. Silver se almacena en `core.observations`. Gold contiene el promedio FIX en `mart.fx_monthly` y las referencias por grano en `mart.grain_reference_monthly`.
 
@@ -91,7 +91,7 @@ El mart conserva algunas entradas del cálculo junto al resultado. Esa redundanc
 
 ## 4. Por qué PostgreSQL
 
-Elegí PostgreSQL porque necesitaba administrar las relaciones entre series, observaciones y capturas, controlar las actualizaciones y consultar los resultados desde un proceso separado. Las claves y restricciones protegen la identidad de los registros, y `INSERT ... ON CONFLICT` permite mantener el estado vigente durante las revisiones.
+El almacenamiento debía coordinar las escrituras del pipeline y las lecturas del dashboard, publicar datos y avance en una misma transacción y aplicar restricciones relacionales entre series, observaciones y capturas. Elegí PostgreSQL para cubrir esos requisitos con un servicio compartido por ambos procesos. Las claves y restricciones protegen la identidad de los registros, y `INSERT ... ON CONFLICT` permite mantener el estado vigente durante las revisiones.
 
 La necesidad más importante fue publicar datos y avance juntos. Si se escribiera Gold y después fallara la actualización del watermark, el dashboard y la siguiente carga podrían interpretar estados distintos. La [transacción de publicación](https://www.postgresql.org/docs/18/tutorial-transactions.html) agrupa esos cambios. Un bloqueo de sesión serializa las publicaciones mientras las consultas HTTP se realizan sin una transacción SQL abierta.
 
@@ -99,17 +99,17 @@ El dashboard abre una transacción `REPEATABLE READ, READ ONLY`: watermark y fil
 
 | Alternativa | Por qué PostgreSQL encajó mejor en esta implementación |
 |---|---|
-| SQLite | El servicio PostgreSQL mantiene una conexión independiente para cargas y dashboard, con los bloqueos y controles transaccionales ya utilizados por el proyecto. |
+| SQLite | Puede cubrir el volumen actual. Se eligió un servicio de base de datos para centralizar el acceso de cargas y dashboard, sin coordinar entre ambos el acceso a un archivo local. |
 | DuckDB | El centro del diseño es mantener el producto y su control operativo entre procesos. PostgreSQL concentra esas escrituras y ofrece al dashboard la consulta SQL sobre el mismo estado publicado. |
 | Databricks / Delta Lake | Para cuatro series y 5,102 observaciones Silver registradas, elegí procesamiento local y un servicio relacional, en lugar de incorporar un entorno distribuido. |
 
-La comparación responde a esas necesidades del proyecto. Las [restricciones implementadas](https://www.postgresql.org/docs/18/ddl-constraints.html) complementan las comprobaciones de conjuntos que ejecuta Python, como cobertura bancaria y continuidad de meses.
+El volumen actual también podría resolverse con otras opciones. La elección responde a la coordinación entre procesos, la publicación transaccional y los controles relacionales requeridos. Las [restricciones implementadas](https://www.postgresql.org/docs/18/ddl-constraints.html) complementan las comprobaciones de conjuntos que ejecuta Python, como cobertura bancaria y continuidad de meses.
 
-## 5. Bbliotecas utilizadas
+## 5. Bibliotecas utilizadas
 
-La combinación del uso de python y SQL ayudan a mantener las reglas del negocio separadas de la interfaz y de los detalles de conexión.
+El uso combinado de Python y SQL permite mantener las reglas del negocio separadas de la interfaz y de los detalles de conexión.
 
-**Las transformaciones y los indicadores se implementaron con funciones Python y `Decimal`.** Pandas no es el motor del pipeline ni una dependencia directa declarada. En particular, la justificación no depende de una medición de memoria de tablas pandas.
+Las transformaciones utilizan funciones Python y `Decimal` para conservar los valores decimales y controlar el redondeo.
 
 | Herramienta | Por qué se utiliza y dónde interviene |
 |---|---|
@@ -134,7 +134,7 @@ Power BI habría permitido desarrollar una capa de BI separada. Para esta entreg
 
 ### Capturas de la aplicación
 
-Las tres capturas muestran **enero de 2009 a septiembre de 2026**, con 213 meses.
+Las tres capturas de [Entregables/Capturas](Capturas) muestran **enero de 2009 a septiembre de 2026**, con 213 meses.
 
 **Precio internacional y referencia en pesos.** Los índices parten de cien en el primer mes seleccionado. La captura de maíz muestra una referencia final de $4,090.12 MXN/t, FIX medio de 17.2640 y cambio acumulado de +69.90%.
 
@@ -166,7 +166,7 @@ El [informe analítico](../docs/RESULTADOS_ANALISIS_ES.md) utiliza 2010-01 a 202
 
 La [evidencia de estado](../docs/evidencias/entrega_final/estado_real.json) registra 5,102 observaciones Silver, 213 medias FIX y 639 referencias Gold para 2009-01 a 2026-09. Son los resultados sobre los que se apoya el análisis, junto con los controles de procedencia y cobertura.
 
-El [informe archivado de validación](../docs/evidencias/entrega_final/validacion.json) acredita 254 pruebas aprobadas, incluidas 91 SQL, en el entorno de origen. La integración local descubrió esos 254 casos, aprobó 163 y omitió los 91 SQL al no habilitar una conexión de pruebas. Las verificaciones del wheel y del scheduler se conservan como evidencias del entorno donde se realizaron, separadas de las capturas del dashboard. El detalle está en la [validación final](../docs/VALIDACION_FINAL_ES.md).
+Se ejecutaron y aprobaron **259 pruebas: 168 sin servidor y 91 de integración PostgreSQL**, sin fallos, errores ni omisiones. El [resumen de resultados](../docs/evidencias/entrega_final/resumen_pruebas.json) registra los resultados; el [catálogo de pruebas](../docs/CATALOGO_PRUEBAS_ES.md) explica sus 32 módulos y enumera cada caso. Las pruebas utilizan bases desechables y HTTP simulado. Las comprobaciones del wheel, el scheduler y el producto real se detallan en el [proceso de implementación](../docs/Implementación_proceso.md).
 
 ### Límites y condiciones de operación
 
@@ -174,17 +174,14 @@ La referencia es nominal y excluye fletes, seguros, aranceles y condiciones come
 
 ### Cierre
 
-La decisión central fue conservar las observaciones con su frecuencia y procedencia, y publicar después un producto mensual consistente. PostgreSQL sostiene las relaciones y las actualizaciones, Python comparte las reglas entre cargas y Streamlit permite explorar el resultado publicado. En conjunto, esta arquitectura cubre los requisitos de la prueba sin añadir herramientas que aumentarían la complejidad del desarrollo.
+La decisión central fue conservar las observaciones con su frecuencia y procedencia, y publicar después un producto mensual consistente. PostgreSQL sostiene las relaciones y las actualizaciones, Python comparte las reglas entre cargas y Streamlit permite explorar el resultado publicado. Se evitó incorporar procesamiento distribuido porque el volumen actual puede resolverse con Python y PostgreSQL.
 
 ## Documentación del proyecto
 
 - [Modelo de datos y contrato de publicación](../docs/MODELO_DATOS_ES.md).
 - [Diccionario de las tablas implementadas](../docs/DICCIONARIO_DATOS_ES.md).
 - [Perfilamiento inicial y precisión observada](../docs/Perfilamiento_inicial.md).
-- [Calendario bancario y cálculo Gold](../docs/GUIA_CALENDARIO_Y_GOLD_ES.md).
-- [Publicación transaccional](../docs/GUIA_PUBLICACION_GOLD_ES.md).
 - [Análisis y dashboard](../docs/ANALISIS_Y_DASHBOARD_ES.md).
-- [Empaquetado y automatización](../docs/GUIA_AUTOMATIZACION_ES.md).
 - [Operación y recuperación](../docs/RUNBOOK_ES.md).
 
 Las fuentes de datos son FRED y Banco de México. El apoyo de IA en código y documentación se reconoce en el README del proyecto.

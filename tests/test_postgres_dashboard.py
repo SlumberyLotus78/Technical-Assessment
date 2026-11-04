@@ -63,17 +63,21 @@ class PostgresDashboardTests(PostgresTestCase):
     def test_a_select_only_login_can_read_the_dashboard(self):
         self.seed()
         role = "grain_reader_" + uuid4().hex
-        self.admin.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+        password = uuid4().hex
+        self.admin.execute(sql.SQL("CREATE ROLE {} LOGIN PASSWORD {}").format(
+            sql.Identifier(role), sql.Literal(password)))
         def remove_role():
             self.connection.rollback()
             self.connection.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
             self.connection.commit()
             self.admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
         self.addCleanup(remove_role)
+        self.admin.execute(sql.SQL("GRANT {} TO {} WITH INHERIT TRUE").format(
+            sql.Identifier(role), sql.Identifier(self.admin.info.user)))
         self.connection.execute(sql.SQL("GRANT USAGE ON SCHEMA core, mart, ops TO {}").format(sql.Identifier(role)))
         self.connection.execute(sql.SQL("GRANT SELECT ON core.series, mart.fx_monthly, mart.grain_reference_monthly, ops.watermarks, ops.runs, ops.schema_migrations TO {}").format(sql.Identifier(role)))
         self.connection.commit()
-        snapshot = read_dashboard_snapshot(make_conninfo(self.database_url, user=role))
+        snapshot = read_dashboard_snapshot(make_conninfo(self.database_url, user=role, password=password))
         self.assertEqual(len(snapshot["rows"]), 9)
 
     def test_corrupt_gold_is_reported_instead_of_plotting_partial_or_wrong_values(self):

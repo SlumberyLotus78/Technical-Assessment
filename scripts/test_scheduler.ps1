@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $identifier = [Guid]::NewGuid().ToString('N')
-$taskName = 'GrainPipelineLearningVerification_' + $identifier
+$taskName = 'GrainPipelineVerification_' + $identifier
 $logRoot = Join-Path $projectRoot ('data\verification\scheduler_' + $identifier)
 $resolvedPython = (Resolve-Path -LiteralPath $PythonPath).Path
 $resolvedEnv = (Resolve-Path -LiteralPath $EnvFile).Path
@@ -37,7 +37,7 @@ try {
 }
 finally {
     if ($created) {
-        if ($taskName -notmatch '^GrainPipelineLearningVerification_[0-9a-f]{32}$') { throw 'Nombre de limpieza incompatible.' }
+        if ($taskName -notmatch '^GrainPipelineVerification_[0-9a-f]{32}$') { throw 'Nombre de limpieza incompatible.' }
         if ((Get-ScheduledTask -TaskName $taskName).State -eq 'Running') { Stop-ScheduledTask -TaskName $taskName }
         Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
     }

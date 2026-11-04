@@ -114,7 +114,7 @@ La persistencia del perfil recalcula las métricas desde la captura registrada y
 | `source_run_id` | `UUID` | No | FK a `ops.runs.run_id`, ejecución que produjo el agregado vigente. |
 | `calculated_at` | `TIMESTAMPTZ` | No | Instante de cálculo. |
 
-Los conteos deben ser positivos e iguales. La certificación exige además igualdad de conjuntos de fechas y aprobación de los controles del mes. Las referencias revisadas cubren 2009–2026, cualquier año adicional requiere su propia evidencia. La persistencia añade ejecución e instante de cálculo dentro de la publicación y conserva la fila si ninguno de sus campos analíticos cambia. La [guía de publicación](GUIA_PUBLICACION_GOLD_ES.md) documenta sus verificaciones.
+Los conteos deben ser positivos e iguales. La certificación exige además igualdad de conjuntos de fechas y aprobación de los controles del mes. Las referencias revisadas cubren 2009–2026, cualquier año adicional requiere su propia evidencia. La persistencia añade ejecución e instante de cálculo dentro de la publicación y conserva la fila si ninguno de sus campos analíticos cambia.
 
 ## 8. mart.grain_reference_monthly
 
@@ -156,7 +156,7 @@ Los dos meses deben ser primeros de mes y estar ordenados. La fila se crea al ce
 
 | Campo | Tipo | Admite NULL | Significado |
 |---|---|---|---|
-| `version` | `TEXT` | No | Identificador del recurso aplicado, en esta etapa, `001_initial`. |
+| `version` | `TEXT` | No | Identificador del recurso aplicado: `001_initial`. |
 | `checksum` | `TEXT` | No | SHA-256 del SQL con saltos de línea normalizados a LF. |
 | `applied_at` | `TIMESTAMPTZ` | No | Instante de la transacción que aplicó la versión. |
 

@@ -6,13 +6,13 @@
 
 **Ámbito:** muestra real del proyecto.
 
-Este informe conserva los resultados del diagnóstico inicial. La certificación bancaria posterior y la validación del histórico completo se documentan al final, no sustituyen ni reescriben el perfil original.
+Este informe describe la muestra de las fuentes. La cobertura bancaria y el producto completo se documentan como comprobaciones de alcance específico.
 
 ## 1. Resultado principal
 
 La muestra analizada contiene **30 observaciones: nueve precios mensuales de granos y 21 registros diarios FIX**. Los 30 valores son numéricos y positivos. Las reglas aplicadas no detectaron ausentes, formatos inválidos, fechas incompatibles, registros fuera de ventana ni fechas duplicadas.
 
-Las tres series de granos tienen los tres meses esperados. En el perfil inicial, la cobertura diaria de FIX quedó pendiente del calendario hábil bancario, tal como registra `coverage_status: pending_banking_calendar`. El resultado favorable de sus controles describe los registros recibidos y conserva esa comprobación pendiente. [Perfil generado](evidencias/perfilamiento_inicial/profile.json).
+Las tres series de granos tienen los tres meses esperados. El perfil por captura registra `coverage_status: pending_banking_calendar` porque diagnostica filas sin evaluar el calendario bancario. La cobertura mensual se comprueba por separado en la [validación Gold](evidencias/calendario_gold/vista_previa.json), que certifica las 21 fechas FIX de septiembre de 2026. [Perfil generado](evidencias/perfilamiento_inicial/profile.json).
 
 ## 2. Procedencia y comprobación de la evidencia
 
@@ -25,7 +25,7 @@ Las tres series de granos tienen los tres meses esperados. En el perfil inicial,
 | Archivos examinados | Cuatro capturas de metadatos, cuatro capturas de observaciones y un perfil consolidado. |
 | Evidencia conservada | Copias de los nueve archivos en `docs/evidencias/perfilamiento_inicial/`. |
 
-Para preparar este informe se comprobaron los contratos de los cuatro registros de metadatos y de las cuatro respuestas de observaciones. Los perfiles se recalcularon desde las capturas utilizando las funciones implementadas y coincidieron con los cuatro resultados almacenados en `profile.json`. Esta revisión utilizó los archivos de la ejecución identificada, sin volver a consultar las APIs.
+Para preparar este informe se comprobaron los contratos de los cuatro registros de metadatos y de las cuatro respuestas de observaciones. Los perfiles se recalcularon desde las capturas utilizando las funciones implementadas y coincidieron con los cuatro resultados almacenados en `profile.json`. La reproducción del perfil utiliza los archivos de la ejecución identificada, sin consultas adicionales a las APIs.
 
 El [manifiesto de evidencia](evidencias/perfilamiento_inicial/manifest.json) conserva la procedencia, el resultado de la reproducción y el tamaño y SHA-256 de cada archivo. Las copias mantienen los mismos bytes que los archivos operativos examinados. Dentro de las capturas, `payload` contiene el JSON interpretado por el cliente, con su contexto de origen.
 
@@ -51,14 +51,14 @@ Los límites de metadatos describen la disponibilidad declarada, esta muestra no
 | Maíz | 2026-07-01 a 2026-09-30 | 3 | 3 | 2026-07-01 | 2026-09-01 | 3 de 3 meses con valor utilizable. |
 | Trigo | 2026-07-01 a 2026-09-30 | 3 | 3 | 2026-07-01 | 2026-09-01 | 3 de 3 meses con valor utilizable. |
 | Soya | 2026-07-01 a 2026-09-30 | 3 | 3 | 2026-07-01 | 2026-09-01 | 3 de 3 meses con valor utilizable. |
-| FIX | 2026-09-01 a 2026-09-30 | 21 | 21 | 2026-09-01 | 2026-09-30 | 21 fechas distintas, calendario bancario pendiente. |
+| FIX | 2026-09-01 a 2026-09-30 | 21 | 21 | 2026-09-01 | 2026-09-30 | 21 fechas distintas; cobertura certificada por la validación mensual Gold. |
 | **Total** | Ventanas de la muestra | **30** | **30** | — | — | Frecuencias evaluadas por separado. |
 
 En las series mensuales, `2026-09-01` identifica el periodo de septiembre. Que la última fecha recibida sea el día uno y la ventana termine el día treinta es coherente con esta representación. `expected_months` es tres y `missing_months` está vacío en los tres perfiles. [Resultados por serie](evidencias/perfilamiento_inicial/profile.json).
 
 Para FRED también se verificó que `count` fuera tres, `offset` cero y la lista recibida tuviera tres registros, con `units: lin` y `output_type: 1`. Esto confirma la integridad de la página recibida bajo el contrato aplicado. Las respuestas de [maíz](evidencias/perfilamiento_inicial/fred_PMAIZMTUSDM_observations.json), [trigo](evidencias/perfilamiento_inicial/fred_PWHEAMTUSDM_observations.json) y [soya](evidencias/perfilamiento_inicial/fred_PSOYBUSDM_observations.json) conservan esos controles.
 
-Los 21 registros FIX llegan dentro de septiembre y no repiten fecha. El perfil no establece todavía cuántas publicaciones correspondían al calendario bancario. Por eso el inicio y fin observados y la ausencia de duplicados no bastan para certificar la cobertura diaria completa. [Respuesta FIX](evidencias/perfilamiento_inicial/banxico_SF43718_observations.json).
+Los 21 registros FIX llegan dentro de septiembre y no repiten fecha. El perfil por captura no calcula el calendario bancario esperado. Por eso el inicio y fin observados y la ausencia de duplicados no bastan para certificar la cobertura diaria completa. [Respuesta FIX](evidencias/perfilamiento_inicial/banxico_SF43718_observations.json).
 
 ## 5. Resultados de calidad
 
@@ -90,14 +90,10 @@ Los extremos coinciden con `value_min` y `value_max` del perfil. Sus fechas se o
 
 Los valores FRED de esta muestra llegan hasta 13 posiciones decimales en cada serie, los de FIX tienen cuatro. Esta diferencia sustenta la conservación de precisión decimal en el almacenamiento y el tratamiento de cada unidad por separado. Los rangos describen únicamente los periodos consultados y no constituyen límites de aceptación para todo el histórico.
 
-## 7. Límites del diagnóstico y comprobaciones posteriores
+## 7. Alcance del diagnóstico y del producto
 
-Los resultados acreditan que las cuatro fuentes entregaron observaciones con estructura compatible y que la muestra pasó los controles iniciales. Sustentan continuar con el modelo de datos, conservando proveedor, serie, fecha, unidad, valor decimal y referencia de captura, junto con controles de unicidad por serie y fecha.
+La muestra comprende nueve precios mensuales de julio a septiembre de 2026 y 21 observaciones FIX de septiembre. Sus valores conservan las unidades de origen y pasan los controles de estructura, fechas, valores y unicidad. El perfil por captura describe las filas recibidas; la certificación bancaria y los cálculos mensuales corresponden a las reglas Gold.
 
-El diagnóstico inicial tenía tres límites de alcance:
+La [validación Gold de la muestra](evidencias/calendario_gold/vista_previa.json) certifica las 21 fechas FIX de septiembre y calcula tres referencias en pesos desde las capturas enlazadas. El producto publicado comprende 2009-01 a 2026-09: 5,102 observaciones Silver, 213 medias FIX y 639 referencias Gold, según la [evidencia de estado](evidencias/entrega_final/estado_real.json).
 
-- **Cobertura FIX:** no contrastaba el conjunto de fechas con el calendario hábil bancario para acreditar un mes completo.
-- **Alcance temporal:** el histórico fuera de julio–septiembre de 2026 todavía no fue perfilado en este avance, el FIX de la muestra solo corresponde a septiembre.
-- **Integración analítica:** no incluía FIX de julio y agosto ni producía referencias Gold en pesos, conservaba las unidades originales.
-
-Posteriormente, la [vista previa Gold](evidencias/calendario_gold/vista_previa.json) certificó las 21 fechas FIX de septiembre de 2026 y calculó tres referencias en memoria desde estas mismas capturas. La carga histórica incorporó las cuatro series para 2009-01 a 2026-09, con cobertura bancaria mensual. Se confirmó su ejecución real y el preflight instalado verificó después 5,102 observaciones Silver, 213 medias FIX y 639 referencias Gold mediante lecturas y comprobación de originales. La [validación final](VALIDACION_FINAL_ES.md) y el [proceso de implementación](Implementación_proceso.md) registran esas verificaciones con sus alcances propios, las 30 observaciones iniciales siguen siendo únicamente la muestra aquí examinada.
+El [proceso de implementación](Implementación_proceso.md) documenta las cargas, la trazabilidad y las comprobaciones del producto completo. Las 30 observaciones de este informe corresponden exclusivamente a la muestra.

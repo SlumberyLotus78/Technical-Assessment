@@ -25,7 +25,6 @@ def parse_source_value(value, provider: str) -> Decimal | None:
     if re.fullmatch(r"[+-]?" + integer + r"(?:\.[0-9]+)?", text) is None:
         raise ValueError("Formato numérico de origen inválido.")
 
-    # Decimal recibe directamente el texto y conserva todos sus decimales.
     number = Decimal(text.replace(",", ""))
     if not number.is_finite():
         raise ValueError("El valor debe ser finito.")

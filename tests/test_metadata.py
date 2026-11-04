@@ -17,10 +17,7 @@ class MetadataTests(unittest.TestCase):
     def test_fred_endpoint_and_identifier(self):
         series = SERIES[0]
         session = Mock()
-        # El registro ficticio ahora incluye los campos exigidos por el contrato.
         record = metadata_record(series)
-        # Sustituimos la referencia a request_json que utiliza este módulo.
-        # La función fetch_metadata sigue ejecutándose realmente.
         with patch("grain_pipeline.sources.metadata.request_json",
                    return_value=metadata_payload(series, record)) as request:
             result = fetch_metadata(session, series, CREDENTIALS)
@@ -42,7 +39,6 @@ class MetadataTests(unittest.TestCase):
                                         {"locale": "es"}, CREDENTIALS)
 
     def test_wrong_identifiers_errors_and_shapes_are_rejected(self):
-        # Cada tupla contiene la serie consultada y una respuesta incompatible.
         cases = (
             (SERIES[0], {"seriess": [{"id": "OTHER"}]}),
             (SERIES[0], {"seriess": []}),

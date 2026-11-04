@@ -1,5 +1,5 @@
 param(
-    [string]$TaskName = 'GrainPipelineLearningIncremental',
+    [string]$TaskName = 'GrainPipelineIncremental',
     [ValidatePattern('^([01][0-9]|2[0-3]):[0-5][0-9]$')][string]$At = '20:00',
     [string]$EnvFile = (Join-Path (Split-Path -Parent $PSScriptRoot) '.env'),
     [string]$BronzeRoot = (Join-Path (Split-Path -Parent $PSScriptRoot) 'data\bronze'),

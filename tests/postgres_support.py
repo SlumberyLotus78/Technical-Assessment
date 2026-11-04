@@ -36,5 +36,5 @@ class PostgresTestCase(unittest.TestCase):
         """Elimina exclusivamente la base UUID creada por esta instancia de prueba."""
         if re.fullmatch(r"grain_test_[0-9a-f]{32}", self.database_name) is None:
             raise ValueError("Nombre de limpieza de prueba incompatible.")
-        self.admin.execute(sql.SQL("DROP DATABASE {} WITH (FORCE)").format(
+        self.admin.execute(sql.SQL("DROP DATABASE {}").format(
             sql.Identifier(self.database_name)))

@@ -28,7 +28,7 @@ def build_wheel(project_root: Path, output_directory: Path) -> dict:
     # Nunca se elimina un directorio build calculado a partir de texto externo.
     with tempfile.TemporaryDirectory(prefix="wheel_", dir=scratch) as temporary:
         source = Path(temporary)
-        for name in ("pyproject.toml", "README.MD"):
+        for name in ("pyproject.toml", "README.md"):
             shutil.copy2(project_root / name, source / name)
         for package in ("grain_pipeline", "app"):
             shutil.copytree(project_root / package, source / package,

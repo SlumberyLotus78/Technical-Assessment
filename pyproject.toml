@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "grain-pipeline"
 version = "1.0.0"
 description = "FRED and Banxico monthly grain references with independent loads and auditable publication"
-readme = "README.MD"
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "requests==2.34.2",
