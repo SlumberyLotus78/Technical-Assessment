@@ -62,3 +62,21 @@ def complete_publication(connection: psycopg.Connection, run_id: UUID, previous:
     connection.execute(
         """UPDATE ops.runs SET status = 'succeeded', stage = 'publication',
            finished_at = clock_timestamp(), error_summary = NULL WHERE run_id = %s""", (run_id,))
+
+def complete_skipped_incremental(connection: psycopg.Connection, run_id: UUID, previous: dict,
+                                  bronze_root: Path, *, as_of: date) -> None:
+    """Cierra un incremental sin ventana, tras comprobar la integridad de su publicación previa."""
+    run = require_running_run(connection, run_id)
+    if (run["load_type"] != "incremental" or run["stage"] != "planning"
+            or run["start_month"] is not None or run["end_month"] is not None):
+        raise ValueError("La omisión requiere un incremental sin ventana en etapa planning.")
+    current = read_watermark(connection)
+    if current is None or current != previous:
+        raise ValueError("El watermark cambió respecto de la comprobación incremental.")
+    first, last = current["start_month"], current["published_through_month"]
+    records = read_silver_observations(connection, first, last, bronze_root)
+    expected = build_monthly_gold(records, first, last, as_of=as_of)
+    validate_stored_gold(expected, read_monthly_gold(connection, first, last))
+    connection.execute(
+        """UPDATE ops.runs SET status = 'skipped', finished_at = clock_timestamp(), error_summary = NULL
+           WHERE run_id = %s""", (run_id,))

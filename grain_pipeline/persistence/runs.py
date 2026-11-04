@@ -1,10 +1,11 @@
-"""Registro y etapas de intentos; el coordinador controla su transacción."""
+"""Registro y etapas de intentos el coordinador controla su transacción."""
 
 from datetime import date
 from uuid import UUID, uuid4
 
 import psycopg
 
+from grain_pipeline.common.dates import months_between
 from grain_pipeline.persistence.database import database_error_message
 
 
@@ -19,7 +20,7 @@ def require_transactional_connection(connection: psycopg.Connection) -> None:
 
 def begin_run(connection: psycopg.Connection, load_type: str,
               start_month: date | None = None, end_month: date | None = None) -> UUID:
-    """Registra un intento running; sus condiciones de publicación se comprueban aparte."""
+    """Registra un intento running, sus condiciones de publicación se comprueban aparte."""
     require_transactional_connection(connection)
     if load_type not in {"historical", "incremental"}:
         raise ValueError("Tipo de carga incompatible.")
@@ -57,6 +58,16 @@ def get_run_status(connection: psycopg.Connection, run_id: UUID) -> str:
     return row[0]
 
 
+def set_run_period(connection: psycopg.Connection, run_id: UUID, start: date, end: date) -> None:
+    """Fija una vez el periodo decidido tras leer los metadatos del incremental."""
+    months_between(start, end)
+    run = require_running_run(connection, run_id)
+    if run["stage"] != "planning" or run["start_month"] is not None:
+        raise ValueError("El periodo solo puede asignarse a un intento aún no planificado.")
+    connection.execute("UPDATE ops.runs SET start_month = %s, end_month = %s WHERE run_id = %s",
+                       (start, end, run_id))
+
+
 def set_run_stage(connection: psycopg.Connection, run_id: UUID, stage: str) -> None:
     """Avanza la etapa de un intento activo, conservando un orden no decreciente."""
     if stage not in RUN_STAGES:
@@ -72,7 +83,8 @@ def fail_run(connection: psycopg.Connection, run_id: UUID, stage: str, error: Ex
     if stage not in RUN_STAGES:
         raise ValueError("Etapa de ejecución incompatible.")
     require_running_run(connection, run_id)
-    # No utilizamos str(error): una excepción de un cliente externo puede contener una URL autenticada. Las métricas DQ explican sus incidencias.
+    # No utilizamos str(error): una excepción de un cliente externo puede
+    # contener una URL autenticada. Las métricas DQ explican sus incidencias.
     summary = database_error_message(error) if isinstance(error, psycopg.Error) else type(error).__name__
     connection.execute(
         """UPDATE ops.runs SET status = 'failed', stage = %s,

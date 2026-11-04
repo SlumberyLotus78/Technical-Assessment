@@ -15,7 +15,7 @@ CREDENTIALS = {"FRED_API_KEY": "fixture-fred-key", "BANXICO_TOKEN": "fixture-ban
 
 
 def json_response(payload, *, status=200, headers=None):
-    """Representa una respuesta nueva; todas sus llamadas son inspeccionables."""
+    """Representa una respuesta nueva, todas sus llamadas son inspeccionables."""
     response = Mock()
     response.status_code = status
     response.headers = {"Content-Type": "application/json", **(headers or {})}
@@ -23,11 +23,14 @@ def json_response(payload, *, status=200, headers=None):
     return response
 
 
-def historical_session():
+def historical_session(*, latest_month=date(2026, 9, 1), banxico_last=date(2026, 11, 3),
+                         latest_by_code=None, overrides=None):
     """Devuelve metadatos ficticios amplios, precios 100 y FIX 20 en fechas de referencia."""
     session = MagicMock(spec=requests.Session)
     session.__enter__.return_value = session
     session.__exit__.return_value = False
+    latest_by_code = {} if latest_by_code is None else latest_by_code
+    overrides = {} if overrides is None else overrides
 
     def get(url, *, params, headers, timeout, allow_redirects):
         if "api.stlouisfed.org" in url:
@@ -44,16 +47,17 @@ def historical_session():
         if not is_observations:
             record = metadata_record(series)
             if series["provider"] == "FRED":
-                record.update(observation_start="1992-01-01", observation_end="2026-09-01")
+                last = latest_by_code.get(series["code"], latest_month)
+                record.update(observation_start="1992-01-01", observation_end=last.isoformat())
             else:
-                record.update(fechaInicio="12/11/1991", fechaFin="03/11/2026")
+                record.update(fechaInicio="12/11/1991", fechaFin=banxico_last.strftime("%d/%m/%Y"))
             return json_response(metadata_payload(series, record))
         months = months_between(start, end.replace(day=1))
         if series["provider"] == "FRED":
-            rows = [{"date": month.isoformat(), "value": "100"} for month in months]
+            rows = [{"date": month.isoformat(), "value": overrides.get((series["code"], month), "100")} for month in months]
         else:
             days = [day for month in months for day in banking_calendar_for_month(month)["expected_dates"]]
-            rows = [{"fecha": day.strftime("%d/%m/%Y"), "dato": "20"} for day in days]
+            rows = [{"fecha": day.strftime("%d/%m/%Y"), "dato": overrides.get((series["code"], day), "20")} for day in days]
         return json_response(observations_payload(series, rows))
 
     session.get.side_effect = get

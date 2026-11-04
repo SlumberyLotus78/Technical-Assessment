@@ -1,4 +1,4 @@
-"""Perfil histórico consolidado, reutiliza los contratos y reglas de la carga."""
+"""Perfil de una ventana de capturas reutiliza contratos y reglas de las cargas."""
 
 from datetime import date
 
@@ -10,7 +10,7 @@ from grain_pipeline.sources.observations import read_observations
 from grain_pipeline.transformations.silver import prepare_observations
 
 
-def profile_historical_captures(captures: list[dict], start: date, end: date) -> dict:
+def profile_capture_window(captures: list[dict], start: date, end: date) -> dict:
     """Resume todos los fragmentos por serie y evalúa cada mes FIX independientemente."""
     grouped = {(series["provider"], series["code"]): [] for series in SERIES}
     for capture in captures:

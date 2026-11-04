@@ -12,10 +12,10 @@ from unittest.mock import patch
 from zoneinfo import ZoneInfoNotFoundError
 
 from grain_pipeline.extraction.capture_reader import read_capture
-from grain_pipeline.extraction.history import capture_historical_metadata, capture_historical_observations
+from grain_pipeline.extraction.captures import capture_metadata, capture_observation_window
 from grain_pipeline.orchestration.historical import main
-from grain_pipeline.orchestration.profiling import profile_historical_captures
-from grain_pipeline.quality.history import validate_historical_availability, validate_historical_period
+from grain_pipeline.orchestration.profiling import profile_capture_window
+from grain_pipeline.quality.windows import validate_source_availability, validate_closed_period
 from grain_pipeline.sources.banking_calendar import banking_calendar_for_month
 from grain_pipeline.sources.catalog import SERIES
 from grain_pipeline.sources.metadata import fetch_metadata
@@ -43,28 +43,28 @@ class HistoricalPlanningTests(unittest.TestCase):
     def test_metadata_availability_and_all_calendars_are_required(self):
         session = historical_session()
         entries = [{"series": series, "metadata": fetch_metadata(session, series, CREDENTIALS)} for series in SERIES]
-        validate_historical_availability(entries, START, END, as_of=AS_OF)
+        validate_source_availability(entries, START, END, as_of=AS_OF)
         bad = [{**entry, "metadata": {**entry["metadata"], "observation_start": "2010-01-01"}}
                if entry["series"]["provider"] == "FRED" else entry for entry in entries]
         for candidate in (entries[:-1], entries + [entries[0]], bad):
             with self.subTest(size=len(candidate)), self.assertRaises(ValueError):
-                validate_historical_availability(candidate, START, END, as_of=AS_OF)
+                validate_source_availability(candidate, START, END, as_of=AS_OF)
         with self.assertRaisesRegex(ValueError, "2027"):
-            validate_historical_availability(entries, date(2027, 1, 1), date(2027, 1, 1), as_of=date(2027, 2, 1))
+            validate_source_availability(entries, date(2027, 1, 1), date(2027, 1, 1), as_of=date(2027, 2, 1))
 
     def test_daily_metadata_can_end_on_the_last_banking_day_before_month_end(self):
         session = historical_session()
         entries = [{"series": series, "metadata": fetch_metadata(session, series, CREDENTIALS)} for series in SERIES]
         entries[-1]["metadata"]["fechaFin"] = "29/05/2026"
-        validate_historical_availability(entries, date(2026, 5, 1), date(2026, 5, 1), as_of=AS_OF)
+        validate_source_availability(entries, date(2026, 5, 1), date(2026, 5, 1), as_of=AS_OF)
         entries[-1]["metadata"]["fechaFin"] = "28/05/2026"
         with self.assertRaises(ValueError):
-            validate_historical_availability(entries, date(2026, 5, 1), date(2026, 5, 1), as_of=AS_OF)
+            validate_source_availability(entries, date(2026, 5, 1), date(2026, 5, 1), as_of=AS_OF)
 
     def test_open_reversed_and_non_initial_months_are_rejected(self):
         for start, end in ((END, START), (START, AS_OF.replace(day=1)), (date(2026, 9, 2), END)):
             with self.subTest(start=start, end=end), self.assertRaises(ValueError):
-                validate_historical_period(start, end, as_of=AS_OF)
+                validate_closed_period(start, end, as_of=AS_OF)
 
     def test_reviewed_resources_preserve_exceptions_and_previous_evidence(self):
         months = months_between(START, END)
@@ -88,11 +88,11 @@ class HistoricalCaptureTests(unittest.TestCase):
             root = Path(directory)
             paths = []
             for series in SERIES:
-                paths.append(capture_historical_metadata(session, series, CREDENTIALS, root))
-                paths.extend(capture_historical_observations(session, series, CREDENTIALS, root, first, last)
+                paths.append(capture_metadata(session, series, CREDENTIALS, root))
+                paths.extend(capture_observation_window(session, series, CREDENTIALS, root, first, last)
                              for first, last in yearly_query_windows(start, end))
             captures = [read_capture(path, root) for path in paths]
-            report = profile_historical_captures(captures, start, end)
+            report = profile_capture_window(captures, start, end)
             self.assertFalse(report["has_issues"])
             self.assertEqual([profile["rows"] for profile in report["profiles"][:3]], [2, 2, 2])
             self.assertEqual(len(report["fix_monthly_coverage"]), 2)
@@ -109,7 +109,7 @@ class HistoricalCaptureTests(unittest.TestCase):
         session.get.side_effect = wrong_id
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            path = capture_historical_metadata(session, SERIES[0], CREDENTIALS, root)
+            path = capture_metadata(session, SERIES[0], CREDENTIALS, root)
             self.assertEqual(read_capture(path, root)["payload"]["seriess"][0]["id"], "OTHER")
 
     def test_cli_missing_private_configuration_does_not_connect_or_query_sources(self):
