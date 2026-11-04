@@ -1,0 +1,36 @@
+{
+  "version": "mx-banking-2013-v1",
+  "year": 2013,
+  "provider": "Banxico",
+  "series_code": "SF43718",
+  "authority": "Comisión Nacional Bancaria y de Valores",
+  "published_on": "2012-12-17",
+  "verified_on": "2026-11-02",
+  "evidence_urls": [
+    "https://sidof.segob.gob.mx/notas/docFuente/5282546"
+  ],
+  "weekend_days": [
+    5,
+    6
+  ],
+  "closed_dates": [
+    "2013-01-01",
+    "2013-02-04",
+    "2013-03-18",
+    "2013-03-28",
+    "2013-03-29",
+    "2013-05-01",
+    "2013-09-16",
+    "2013-11-02",
+    "2013-11-18",
+    "2013-12-12",
+    "2013-12-25"
+  ],
+  "review_provenance": {
+    "source_commit": "f641366",
+    "source_file": "grain_pipeline/quality/reference_data/banking_holidays.csv",
+    "source_sha256_lf": "68562739dfa528f63175c033bef36c5252e9580ae9e544ac4556fbecd867a8ab",
+    "recorded_review_on": "2026-11-02",
+    "imported_on": "2026-11-03"
+  }
+}

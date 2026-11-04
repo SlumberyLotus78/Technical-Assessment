@@ -1,0 +1,36 @@
+{
+  "version": "mx-banking-2011-v1",
+  "year": 2011,
+  "provider": "Banxico",
+  "series_code": "SF43718",
+  "authority": "Comisión Nacional Bancaria y de Valores",
+  "published_on": "2010-12-10",
+  "verified_on": "2026-11-02",
+  "evidence_urls": [
+    "https://dof.gob.mx/abrirPDF.php?anio=2010&archivo=10122010-MAT.pdf&repo=repositorio%2F"
+  ],
+  "weekend_days": [
+    5,
+    6
+  ],
+  "closed_dates": [
+    "2011-01-01",
+    "2011-02-07",
+    "2011-03-21",
+    "2011-04-21",
+    "2011-04-22",
+    "2011-05-01",
+    "2011-09-16",
+    "2011-11-02",
+    "2011-11-21",
+    "2011-12-12",
+    "2011-12-25"
+  ],
+  "review_provenance": {
+    "source_commit": "f641366",
+    "source_file": "grain_pipeline/quality/reference_data/banking_holidays.csv",
+    "source_sha256_lf": "68562739dfa528f63175c033bef36c5252e9580ae9e544ac4556fbecd867a8ab",
+    "recorded_review_on": "2026-11-02",
+    "imported_on": "2026-11-03"
+  }
+}

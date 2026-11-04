@@ -1,0 +1,36 @@
+{
+  "version": "mx-banking-2025-v1",
+  "year": 2025,
+  "provider": "Banxico",
+  "series_code": "SF43718",
+  "authority": "Comisión Nacional Bancaria y de Valores",
+  "published_on": "2024-12-27",
+  "verified_on": "2026-11-02",
+  "evidence_urls": [
+    "https://sidof.segob.gob.mx/notas/docFuente/5746258"
+  ],
+  "weekend_days": [
+    5,
+    6
+  ],
+  "closed_dates": [
+    "2025-01-01",
+    "2025-02-03",
+    "2025-03-17",
+    "2025-04-17",
+    "2025-04-18",
+    "2025-05-01",
+    "2025-09-16",
+    "2025-11-02",
+    "2025-11-17",
+    "2025-12-12",
+    "2025-12-25"
+  ],
+  "review_provenance": {
+    "source_commit": "f641366",
+    "source_file": "grain_pipeline/quality/reference_data/banking_holidays.csv",
+    "source_sha256_lf": "68562739dfa528f63175c033bef36c5252e9580ae9e544ac4556fbecd867a8ab",
+    "recorded_review_on": "2026-11-02",
+    "imported_on": "2026-11-03"
+  }
+}

@@ -2,7 +2,7 @@
 
 ## 1. Estado y fundamento
 
-El SQL inicial y el preparador se validaron en una instancia aislada. La escritura Silver, Gold y el publicador transaccional están implementados y probados con datos ficticios en entorno aislado. Los coordinadores de extracción histórica e incremental se conectarán a estas funciones manteniendo sus comandos independientes.
+El histórico inicial conecta extracción, perfil y publicación hasta Gold y se verificó con HTTP simulado y PostgreSQL aislado. El incremental se conectará por separado a las funciones compartidas.
 
 El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX. Una validación posterior de calendario y Gold certificó el FIX de septiembre de 2026 y calculó sus tres referencias. La publicación se verificó después en bases desechable, la ejecución histórica completa con fuentes reales permanece pendiente.
 
@@ -65,7 +65,7 @@ Las transformaciones implementan un contexto decimal de 34 dígitos significativ
 
 Para cada mes, el conjunto de fechas FIX válidas deberá coincidir con el calendario hábil bancario aplicable. Se conservarán el número observado, el esperado y una referencia a la evidencia del calendario. Las coincidencias de conteo por sí solas no sustituyen la comparación de fechas.
 
-La lectura anual, la comparación y el agregado están implementados en módulos separados. La referencia incorporada cubre 2026 e identifica su versión y SHA-256. Un año sin recurso revisado impide el agregado. La persistencia escribe los resultados en la transacción de publicación y conserva filas y auditoría cuando sus valores no cambian.
+La lectura anual, la comparación y el agregado están implementados en módulos separados. Las referencias incorporadas cubren 2009–2026, con versión, SHA-256 y procedencia documentada. Un año sin recurso revisado impide el histórico y el agregado. La persistencia escribe los resultados en la transacción de publicación y conserva filas y auditoría cuando sus valores no cambian.
 
 
 La convención analítica será la media aritmética de los valores FIX diarios válidos de ese mes:
@@ -108,7 +108,7 @@ La actualización de Silver, Gold, watermark y estado de éxito pertenece a una 
 
 El registro inicial del intento, sus capturas y sus resultados DQ se confirmarán antes y fuera de esa transacción, para conservar el diagnóstico cuando una publicación falle. Después de un fallo se revertirá la publicación y se registrará el error en una transacción separada. Los archivos Bronze permanecerán disponibles.
 
-Las publicaciones del mismo producto se serializan mediante un bloqueo de sesión que permanece adquirido entre transacciones DQ y de publicación. La contención se rechaza sin espera indefinida. Los futuros coordinadores mantendrán este ámbito desde la planificación. Se comprobaron su duración entre commits y rollback y su liberación ante errores.
+Las publicaciones del mismo producto se serializan mediante un bloqueo de sesión que permanece adquirido entre transacciones. El coordinador histórico mantiene ese ámbito desde la planificación y deja la conexión SQL sin transacción abierta durante las peticiones HTTP. La contención se rechaza sin espera indefinida. Se comprobaron su duración y su liberación ante errores.
 
 Un reproceso de un intervalo ya publicado conservará los límites vigentes y actualizará los resultados afectados. Cualquier ampliación del intervalo deberá mantener continuidad. El watermark no retrocederá ni avanzará por recibir metadatos o completar únicamente Silver.
 
@@ -121,5 +121,5 @@ Un reproceso de un intervalo ya publicado conservará los límites vigentes y ac
 | Reproceso histórico | Intervalo explícito y validación completa de sus dependencias. | Corrección de filas y recálculo de Gold, conservando la evidencia y la continuidad del intervalo publicado. |
 
 
- La ampliación Silver tiene [evidencia de 108 pruebas aprobadas](evidencias/persistencia_silver/validacion.json), incluidas 22 con PostgreSQL aislado. La ampliación de calendario y Gold tiene [108 casos ejecutados correctamente y 22 SQL omitidos](evidencias/calendario_gold/validacion.json), sobre 130 descubiertos. La carga histórica completa, los calendarios de sus años y la publicación se construirán sobre estas funciones.
+Ambas cargas reutilizarán extracción, calidad, transformación y persistencia mediante coordinadores independientes. El histórico inicial exige ausencia de watermark y recibe sus meses explícitos. Se eligió 2009-01 a 2026-09, sus referencias bancarias están incorporadas. Los reprocesos del publicador son una capacidad de biblioteca distinta de este comando inicial.
 

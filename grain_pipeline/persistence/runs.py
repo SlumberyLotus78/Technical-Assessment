@@ -49,6 +49,14 @@ def require_running_run(connection: psycopg.Connection, run_id: UUID) -> dict:
             "start_month": row[3], "end_month": row[4]}
 
 
+def get_run_status(connection: psycopg.Connection, run_id: UUID) -> str:
+    """Consulta el estado durable para evitar cerrar de nuevo un intento terminado."""
+    row = connection.execute("SELECT status FROM ops.runs WHERE run_id = %s", (run_id,)).fetchone()
+    if row is None:
+        raise ValueError("El intento solicitado no existe.")
+    return row[0]
+
+
 def set_run_stage(connection: psycopg.Connection, run_id: UUID, stage: str) -> None:
     """Avanza la etapa de un intento activo, conservando un orden no decreciente."""
     if stage not in RUN_STAGES:

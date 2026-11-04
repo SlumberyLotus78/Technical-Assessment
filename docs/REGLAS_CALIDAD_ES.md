@@ -6,7 +6,8 @@ Este catálogo relaciona los controles existentes de exploración con las valida
 
 «Implementada en exploración» significa que existe una función de contrato o perfil, verificada con escenarios simulados y aplicada a la muestra real. No acredita todavía integración con PostgreSQL. «Pendiente» identifica un control cuyo mecanismo de carga o publicación falta construir.
 
-La persistencia del perfil genera códigos de este catálogo en `ops.dq_results.rule_code`, vinculados a la captura y al intento. El publicador incorpora controles del conjunto y de las capa, su conexión con la extracción histórica completa queda pendiente. 
+La persistencia del perfil genera códigos en `ops.dq_results.rule_code`, vinculados a captura e intento. El histórico inicial integra extracción y publicador, con controles por ventana y del conjunto completo.
+
 
 ## 2. Fuentes y registros
 
@@ -14,7 +15,7 @@ La persistencia del perfil genera códigos de este catálogo en `ops.dq_results.
 |---|---|---|---|
 | `SRC-01` | Proveedor y serie conocidos, identidad coherente con la consulta. | Catálogo, `read_series_record`, `fetch_metadata` y `read_observations`. Implementada en exploración. | Coincidencia de identificadores donde el proveedor los entrega. Contexto de petición y metadatos validados. |
 | `SRC-02` | Título, unidad, frecuencia, clasificación y disponibilidad compatibles. | Validación API y del registro archivado, publicación comprueba metadatos y fechas observadas frente a disponibilidad. | Contrato aprobado y rango interpretable. |
-| `SRC-03` | Estructura de observaciones y respuesta completa para la ventana. | `read_observations`. Implementada para la muestra de una página. | Campos presentes y ausencia de error de fuente. Controles FRED de página, unidades y tipo de salida compatibles. |
+| `SRC-03` | Estructura de observaciones y respuesta completa para la ventana. | Contrato aplicado a cada ventana anual, después de archivar y registrar la respuesta, se repite antes de publicar. | Campos presentes y ausencia de error de fuente, controles FRED de página, unidades y tipo de salida compatibles. |
 | `DQ-01` | Fechas válidas según el proveedor. | Perfil, preparación Silver y registro de evaluación implementados. | Cero fechas inválidas. |
 | `DQ-02` | Fechas dentro de la ventana solicitada. | Perfil y escritura Silver, se exige además que la captura esté dentro del intervalo del intento. | Cero observaciones fuera de ventana. |
 | `DQ-03` | Valores con formato numérico válido y finito. | Interpretación, preparación Silver y registro de evaluación implementados. | Cero formatos o tipos incompatibles. |
@@ -23,11 +24,11 @@ La persistencia del perfil genera códigos de este catálogo en `ops.dq_results.
 | `DQ-06` | Fecha única dentro de cada serie y entrada procesada. | Implementada por captura, en Gold y al reunir los fragmentos registrados, el publicador conserva métricas globales. | Cero duplicados en todas las páginas y fragmentos de la carga. |
 | `DQ-07` | Primer día como identificador de cada periodo mensual. | Contratos, preparación Silver y registro de evaluación implementados. | Cero identificadores mensuales incompatibles. |
 | `DQ-08` | Meses esperados con valor utilizable. | Evaluada por captura y para los tres granos del intervalo reunido, con registro global antes de publicar. | Igualdad de los meses requeridos con los recibidos y validados, cero meses ausentes. |
-| `DQ-09` | Cobertura FIX contra calendario bancario versionado. | Regla mensual evaluada y registrada en publicación, referencia 2026 incorporada. El perfil de diagnóstico conserva su pendiente, el publicador utiliza la evaluación mensual efectiva. | Igualdad de conjuntos de fechas esperadas y válidas, sin duplicados ni valores ausentes, años sin referencia revisada bloqueados. |
+| `DQ-09` | Cobertura FIX contra calendario bancario versionado. | Referencias 2009–2026, evaluación mensual en perfil histórico y SQL. Años sin referencia bloqueados antes de consultar observaciones. | Igualdad de conjuntos de fechas esperadas y válidas, sin duplicados ni valores ausentes. |
 
 Un campo estructural ausente detiene el contrato. Un campo presente con valor incompatible queda contabilizado en el perfil. Para una carga, las incidencias sobre registros requeridos impedirán publicar el intervalo afectado, no se eliminarán filas ni se sustituirán valores para aparentar cobertura.
 
-Las consultas extensas deberán comprobarse en conjunto, incluidos límites de fragmentos y páginas. El control actual de una página FRED será una pieza reutilizable, no una evidencia de paginación histórica ya implementada.
+Las consultas se dividen en años calendario. Cada serie FRED mensual requiere como máximo doce periodos por ventana y su contrato exige una respuesta completa. Los perfiles consolidados y el publicador comprueban los límites de todos los fragmentos reunidos.
 
 ## 3. Procedencia, transformación y persistencia
 

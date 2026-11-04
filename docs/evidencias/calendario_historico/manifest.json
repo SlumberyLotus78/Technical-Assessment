@@ -1,0 +1,111 @@
+{
+  "source_commit": "f641366",
+  "source_reference_sha256_lf": "68562739dfa528f63175c033bef36c5252e9580ae9e544ac4556fbecd867a8ab",
+  "source_review_document": "docs/CALENDARIO_FIX_ES.md",
+  "source_review_date": "2026-11-02",
+  "imported_on": "2026-11-03",
+  "reviewed_years": [
+    2009,
+    2026
+  ],
+  "resources": [
+    {
+      "year": 2009,
+      "file": "grain_pipeline/sources/calendars/2009.json",
+      "sha256_lf": "4c5f362fa938b31f370f84e858a3481cfc541c1fdb0f51007f321e6a8156e35b"
+    },
+    {
+      "year": 2010,
+      "file": "grain_pipeline/sources/calendars/2010.json",
+      "sha256_lf": "d0f8a43f302d97d11524d6f231d5357141924aba6fb00a857fe4ef34b4d092d6"
+    },
+    {
+      "year": 2011,
+      "file": "grain_pipeline/sources/calendars/2011.json",
+      "sha256_lf": "4d479e19a01d40eaddb1d3bf96cf179f1f6caea8df538f7208a0e1da7776c045"
+    },
+    {
+      "year": 2012,
+      "file": "grain_pipeline/sources/calendars/2012.json",
+      "sha256_lf": "8123c796c4792c0c7ce6bc4bb3d89f55e93cff9dc93437697f8d6fba07ad602b"
+    },
+    {
+      "year": 2013,
+      "file": "grain_pipeline/sources/calendars/2013.json",
+      "sha256_lf": "087ecf6fea2b470d91e535f80eb63872a5e18e1945327fab90f866d927ab330e"
+    },
+    {
+      "year": 2014,
+      "file": "grain_pipeline/sources/calendars/2014.json",
+      "sha256_lf": "6aaecf7f3a4a32911692263bd30bd229491fa38ed0daa29da0eb58af1793e09e"
+    },
+    {
+      "year": 2015,
+      "file": "grain_pipeline/sources/calendars/2015.json",
+      "sha256_lf": "42ef43a976c44da6286b7bf0cd3d00e8ac7211a444286684f4b9ecc8635d3668"
+    },
+    {
+      "year": 2016,
+      "file": "grain_pipeline/sources/calendars/2016.json",
+      "sha256_lf": "29532f5c615f98e4e9db47d8fd7ccd256da8fc845f4fd07c55d5d3acabb5034b"
+    },
+    {
+      "year": 2017,
+      "file": "grain_pipeline/sources/calendars/2017.json",
+      "sha256_lf": "5c67eae48b8b331e44a4131801796b10de4d6e77f556eff5179c09e90491178a"
+    },
+    {
+      "year": 2018,
+      "file": "grain_pipeline/sources/calendars/2018.json",
+      "sha256_lf": "737a00075ed235c2af298e4819ef751791d7af3f2de0d8773e11eafe55ee3775"
+    },
+    {
+      "year": 2019,
+      "file": "grain_pipeline/sources/calendars/2019.json",
+      "sha256_lf": "1e4df51b0113468db42db6555c51fc8c46a7f1742aede420d43099f918cd2358"
+    },
+    {
+      "year": 2020,
+      "file": "grain_pipeline/sources/calendars/2020.json",
+      "sha256_lf": "ab21e0cdf6bb025dcaa1dcee4ff059f04c3f39f1b29106fa987a9f54fa56a804"
+    },
+    {
+      "year": 2021,
+      "file": "grain_pipeline/sources/calendars/2021.json",
+      "sha256_lf": "2b12669ac68d29dee950bef36ec1d045438cb3d7c3c1d82e7584e35842244d06"
+    },
+    {
+      "year": 2022,
+      "file": "grain_pipeline/sources/calendars/2022.json",
+      "sha256_lf": "a81a4c30b417ad2bc31c600a7d3b1658fa9d011e8767a8046fca89f5efa0e802"
+    },
+    {
+      "year": 2023,
+      "file": "grain_pipeline/sources/calendars/2023.json",
+      "sha256_lf": "197dc4aeafd75a458aa5fa520fdbb2b5b1c937da412a7f002d9b8d565a46367a"
+    },
+    {
+      "year": 2024,
+      "file": "grain_pipeline/sources/calendars/2024.json",
+      "sha256_lf": "f97bec7940d41212763a2cec3b08a6643bfda80161cea2b87efb557c25a56e24"
+    },
+    {
+      "year": 2025,
+      "file": "grain_pipeline/sources/calendars/2025.json",
+      "sha256_lf": "89cc905fec32110f9d36dac2b0722f0bb6ed065f43ad8782d45345f1a3505872"
+    },
+    {
+      "year": 2026,
+      "file": "grain_pipeline/sources/calendars/2026.json",
+      "sha256_lf": "2845065041bc4d298ca2a572a53410a351cd45aca820d4ca6228cff4073c3044"
+    }
+  ],
+  "requested_interval": {
+    "start_month": "2009-01",
+    "end_month": "2026-09"
+  },
+  "expected_months": 213,
+  "expected_fix_days": 4463,
+  "expected_grain_observations": 639,
+  "api_observations_queried": false
+}

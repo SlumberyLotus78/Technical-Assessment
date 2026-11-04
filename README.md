@@ -60,7 +60,7 @@ In pgAdmin, connect with the administrator account and open the Query Tool on a 
 CREATE DATABASE fred_banxico OWNER admin;
 ```
 
-Replace `admin` with the configured project login role. Database creation requires an administrator with the appropriate privileges; see [CREATE DATABASE](https://www.postgresql.org/docs/18/sql-createdatabase.html).
+Replace `admin` with the configured project login role. Database creation requires an administrator with the appropriate privileges, see [CREATE DATABASE](https://www.postgresql.org/docs/18/sql-createdatabase.html).
 
 The project account must be able to connect to the database, create the `core`, `mart`, and `ops` schemas, and own the objects it creates. Using the project database owner provides these permissions in the standard setup. See [PostgreSQL privileges](https://www.postgresql.org/docs/18/ddl-priv.html).
 
@@ -120,7 +120,7 @@ This command validates series identities, titles, units, frequencies, classifica
 .\.venv\Scripts\python.exe -X utf8 -m grain_pipeline.extraction.sample --env-file .env
 ```
 
-The sample contains three months for each monthly grain series and one month for daily FIX observations, ending in the same month. To select the final month explicitly, use `--month YYYY-MM`; the command checks its availability before querying observations.
+The sample contains three months for each monthly grain series and one month for daily FIX observations, ending in the same month. To select the final month explicitly, use `--month YYYY-MM`, the command checks its availability before querying observations.
 
 Each execution saves its captures and `profile.json` under:
 
@@ -153,9 +153,24 @@ Choose the closed month covered by the FIX sample. For a September 2026 sample:
 
 The command validates all four observation captures, compares FIX dates with the reviewed banking calendar, calculates the monthly mean FIX, and produces three grain references in MXN per metric ton. It runs locally from the sample files.
 
-Use `--sample-dir PATH` and `--bronze-root PATH` to select an explicit sample. Add `--output PATH` to create a JSON report with source hashes, calendar evidence, and calculated values. The destination directory must exist; existing files are rejected.
+Use `--sample-dir PATH` and `--bronze-root PATH` to select an explicit sample. Add `--output PATH` to create a JSON report with source hashes, calendar evidence, and calculated values. The destination directory must exist, existing files are rejected.
 
 Each requested year requires a reviewed calendar resource under `grain_pipeline/sources/calendars/`. Missing calendar evidence or incomplete monthly inputs block the calculation.
+
+
+## Run the Initial Historical Load
+
+The historical command requires the prepared PostgreSQL schema, API credentials, and a product with no published watermark. Run it with an explicit interval of closed months:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -m grain_pipeline.orchestration.historical --start-month 2009-01 --end-month 2026-09 --env-file .env
+```
+
+The command validates metadata availability and reviewed banking calendars, downloads observations in calendar-year windows, saves and registers each capture, and generates a consolidated profile. It then publishes Silver, Gold, the watermark, and the successful run status in one transaction.
+
+Historical files are stored under `data/bronze/historical/<run_id>/`. They include the query plan, original captures, extraction manifest, historical profile, and publication result. Use `--bronze-root PATH` to choose another storage root.
+
+Banking-calendar resources cover 2009–2026. Other years require reviewed references. A source contract, coverage, or publication failure preserves its available captures and diagnostic records.
 
 ## Tests
 

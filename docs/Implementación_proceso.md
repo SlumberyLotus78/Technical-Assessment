@@ -13,6 +13,8 @@ Sobre esa evidencia se definieron el modelo, el diccionario y las reglas para la
 
 Se incorporaron las funciones compartidas de media FIX, referencias mensuales en MXN/t y variaciones por fecha exacta. La vista previa Gold produjo tres referencias para septiembre desde las capturas archivadas. Posteriormente se implementaron la persistencia Gold y el publicador transaccional, verificados con capturas ficticias en PostgreSQL aislado. Su conexión con la extracción histórica completa permanece pendiente.
 
+Se incorporaron las funciones compartidas de media FIX, referencias mensuales en MXN/t y variaciones por fecha exacta. La vista previa Gold produjo tres referencias para septiembre desde las capturas archivadas. Posteriormente se implementaron la persistencia Gold y el publicador transaccional. El coordinador histórico conectó la extracción con esas funciones y recorrió el periodo elegido con HTTP simulado y PostgreSQL aislado. La ejecución histórica con las APIs reales de esta rama queda por realizar.
+
 Este documento registra el avance de implementación y sus verificaciones. El detalle cuantitativo se presenta en el [perfilamiento inicial](Perfilamiento_inicial.md).
 
 ## 2. Avance registrado
@@ -33,7 +35,8 @@ Este documento registra el avance de implementación y sus verificaciones. El de
 | Documentación de ejecución | README en inglés con resumen, requisitos, preparación de PostgreSQL y comando, seguimiento del desarrollo conservado en esta bitácora. | `4d3ea3fb` |
 | Persistencia y preparación Silver | Registro de intentos, capturas y DQ, verificación de integridad, conversión a tipos comunes y escritura por clave natural. | `a12de0e9` |
 | Calendario y transformaciones Gold | Referencia bancaria 2026, regla DQ-09, dependencias mensuales, media FIX, referencias MXN/t y variaciones. | `2aaef90c` |
-| Publicación transaccional | Escritura Gold, procedencia Silver, validación global, bloqueo del producto y confirmación conjunta de capas, watermark y éxito. | Avance actual, pendiente de commit. |
+| Publicación transaccional | Escritura Gold, procedencia Silver, validación global, bloqueo del producto y confirmación conjunta de capas, watermark y éxito. | `f114c100` |
+| Coordinación histórica | Periodo explícito, referencias 2009–2026, consultas anuales, reintentos, perfil consolidado y publicación hasta Gold. | Avance actual, pendiente de commit. |
 
 ## 3. Organización de la implementación
 
@@ -42,12 +45,13 @@ El código se distribuye por responsabilidad mediante funciones y paquetes, dond
 | Componente | Responsabilidad implementada |
 |---|---|
 | `common/` | Configuración privada, fechas, operaciones de calendario y política decimal compartida. |
-| `clients/` | Comunicación HTTP, autenticación, tiempos de espera y errores controlados. |
+| `clients/` | HTTP, autenticación, tiempos de espera, reintentos acotados y errores controlados. |
 | `sources/` | Catálogo, contratos, consultas, selección de ventanas y referencias bancarias anuales. |
+| `extraction/` | Conservación de capturas de muestra y de los fragmentos históricos. |
 | `quality/` | Interpretación decimal, perfil, aceptación, cobertura, continuidad, procedencia y comparación de resultados. |
 | `persistence/` | Conexión, esquema, catálogo, intentos, capturas, DQ, Silver, Gold y watermark. |
 | `transformations/` | Preparación Silver, media FIX, referencias MXN/t, variaciones y vistas previas locales. |
-| `orchestration/` | Preparación de entradas, ámbito de bloqueo y coordinación de commits, rollback y cierre. |
+| `orchestration/` | Histórico inicial, perfil consolidado, preparación, bloqueo, commits, rollback y cierre. |
 | `tests/` | Casos sin servidor y SQL, capturas ficticias y ejecutor con integración explícita. |
 
 El flujo implementado consulta los metadatos, determina las ventanas, solicita las observaciones, conserva el JSON recibido y aplica el contrato y las reglas de perfil. Los números se interpretan directamente desde texto con `Decimal`, manteniendo la precisión disponible en las fuentes.
@@ -70,8 +74,8 @@ Las capturas operativas permanecen excluidas de Git. La copia seleccionada para 
 
 | Tipo de verificación | Evidencia disponible |
 |---|---|
-| Pruebas sin servidor | 118 casos aprobados, incluidos los diez nuevos de reglas de publicación y configuración del ejecutor. |
-| Pruebas SQL | 43 casos aprobados en PostgreSQL 18.6 aislado, incluidos 21 nuevos de publicación, cero omisiones en la verificación completa. |
+| Pruebas sin servidor | 133 casos aprobados, incluidos los nuevos de reintentos, ventanas, disponibilidad, archivo de respuestas y perfil histórico. |
+| Pruebas SQL | 53 casos aprobados en PostgreSQL 18.6 aislado, incluidos diez nuevos del coordinador histórico, cero omisiones en la verificación completa. |
 | Consultas reales previas | Confirmación de acceso, contratos de metadatos, disponibilidad y propuesta de ventanas de las cuatro series. |
 | Muestra real | 3 observaciones por grano de julio a septiembre de 2026 y 21 observaciones FIX de septiembre: 30 registros en total. |
 | Reproducción del perfil | Los cuatro perfiles recalculados desde las capturas coinciden con `profile.json`. |
@@ -81,6 +85,7 @@ Las capturas operativas permanecen excluidas de Git. La copia seleccionada para 
 | Preparación Silver real | Las 30 observaciones archivadas se prepararon como `date` y `Decimal` sin consultar APIs ni escribir en la base del proyecto. |
 | Transformación Gold real | 24 entradas del mes seleccionado: tres precios y 21 FIX. Se produjeron una media y tres referencias MXN/t en memoria. |
 | Publicación SQL con datos ficticios | Inicialización, repetición, revisiones, ampliación continua, visibilidad entre sesiones y reversión conjunta de capas y control. |
+| Histórico técnico completo | Enero de 2009 a septiembre de 2026 con HTTP simulado: 76 capturas, 5,102 observaciones Silver, 213 agregados FIX y 639 referencias Gold. |
 
 
 Las pruebas simuladas verifican el comportamiento del código mientras que la muestra real aporta evidencia sobre los registros efectivamente recibidos. Ambas verificaciones tienen alcances distintos y se documentan por separado.
@@ -138,21 +143,37 @@ Primero se ejecutaron 18 pruebas SQL nuevas en la instancia temporal y finalizar
 El resultado fue de **161 pruebas aprobadas: 118 sin servidor y 43 SQL**, con cero fallos, errores u omisiones, en Python 3.12.4 y PostgreSQL 18.6. Cada caso SQL utilizó una base desechable y capturas ficticias. Una segunda conexión confirmó que el estado anterior permanecía visible hasta el commit. Se inyectaron errores después de escribir Gold y después de actualizar watermark y éxito, todas esas modificaciones se revirtieron juntas. La revisión ficticia de agosto también actualizó la variación dependiente de septiembre.
 
 
+### 5.4. Coordinador histórico y periodo seleccionado
+
+Se incorporaron diecisiete referencias anuales adicionales a partir de la tabla curada del proyecto original, cuya revisión estaba registrada el 2026-11-02. Se conservaron la fecha de revisión, el commit de procedencia, la copia pública de la tabla y sus hashes. Se cotejaron los registros de publicación disponibles en SIDOF y se preservaron los cierres extraordinarios documentados de 2010 y 2024. El recurso 2026 previo permaneció intacto. El [manifiesto histórico](evidencias/calendario_historico/manifest.json) registró 213 meses y 4,463 fechas FIX esperadas, sin presentarlas como observaciones nuevamente consultadas.
+
+Se separaron las ventanas anuales, las reglas de disponibilidad, las funciones de captura y el perfil consolidado. El coordinador adquirió el bloqueo del producto desde la planificación, registró el intento y confirmó cada captura antes de aplicar sus contratos. Se exigió una base sin watermark para la inicialización histórica. Las peticiones HTTP se realizaron con la conexión SQL sin transacción abierta, esta condición se comprobó durante la integración.
+
+El cliente HTTP incorporó hasta tres intentos para fallos transitorios, con esperas acotadas y tratamiento de `Retry-After`. Las respuestas se cerraron antes de esperar. Los contratos y errores permanentes siguieron siendo bloqueantes. Las pruebas separaron el comportamiento de un único intento de los escenarios de recuperación y agotamiento.
+
+La integración de PostgreSQL recorrió primero diez casos nuevos con HTTP simulado y terminó correctamente. Después se ejecutó la suite completa mediante `tests.run --postgres --report`, usando la conexión del clúster temporal en el entorno del proceso. El resultado fue de **186 pruebas aprobadas: 133 sin servidor y 53 SQL**, sin fallos, errores ni omisiones. El [informe de carga histórica](evidencias/carga_historica/validacion.json) conserva el resultado y distingue los datos ficticios utilizados.
+
+El caso del intervalo completo realizó 76 llamadas HTTP simuladas y publicó 639 precios ficticios de 100 USD/t y 4,463 FIX ficticios de 20 MXN/USD. Se comprobaron 213 agregados, 639 referencias y 603 variaciones YoY con comparador. Otros casos verificaron fallos de red, metadatos incompatibles, respuestas parciales, cobertura incompleta y rechazo de una segunda inicialización. El comando de terminal también se probó con configuración ficticia y una base desechable.
+
+
 ## 6. Estado de las capas y cargas
 
 | Frente | Estado al corte |
 |---|---|
-| Bronze | Captura local de muestras implementada y comprobada con respuestas reales. |
+| Bronze | Muestras reales conservadas y captura histórica por ventanas implementada. |
+| Silver | Integrada con el coordinador histórico y verificada en el intervalo completo con datos ficticios. |
 | Gold | Transformaciones, escritura y publicación implementadas, muestra real calculada en memoria y publicación probada con datos ficticios. |
-| Carga histórica | Contrato definido, periodo y proceso pendientes. Los años elegidos deberán contar con calendario revisado. |
+| Carga histórica | Comando inicial independiente, periodo elegido y calendarios incorporados. Recorrido hasta Gold probado, ejecución real de esta rama pendiente. |
 | Carga incremental | Requisito de histórico y ampliación continua probados en el publicador. Comando y planificación independientes pendientes. |
 | Persistencia y control | Publicador sobre capturas registradas, bloqueo de sesión, diagnóstico durable y watermark implementados y verificados. Recuperación automática pendiente. |
 | Visualización y automatización | Pendientes del modelo analítico, el paquete instalable y la programación del incremental. |
 
 
+La extracción de muestra es un diagnóstico de fuentes. El histórico inicial invoca el publicador para confirmar el periodo completo la ejecución real generará sus propias capturas, métricas y estado durable.
+
 ## 7. Continuidad prevista
 
-El siguiente desarrollo conectará la extracción histórica con el publicador, definiendo su periodo explícito y las referencias bancarias necesarias.
+El siguiente desarrollo incorporará el incremental independiente sobre el watermark histórico, con una ventana de revisión definida.
 
 La carga histórica establecerá la base inicial hasta Gold y las cargas incrementales se implementará después como proceso independiente, compartiendo reglas y transformaciones, con control de reejecuciones y actualización de watermarks tras una publicación satisfactoria. La visualización y el empaquetado para automatización se incorporarán sobre esa base.
 

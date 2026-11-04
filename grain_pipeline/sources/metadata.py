@@ -1,4 +1,5 @@
-"""Consulta pequeña y validación de contratos de metadatos de las cuatro series"""
+"""Consulta pequeña y validación de contratos de metadatos de las cuatro series.
+"""
 
 import argparse
 from datetime import datetime
@@ -18,6 +19,11 @@ from grain_pipeline.sources.sampling import sample_window, select_sample_month
 
 def fetch_metadata(session: requests.Session, series: dict, credentials: dict) -> dict:
     """Consulta una serie y delega en su contrato la validación del contenido."""
+    return validate_metadata(fetch_metadata_payload(session, series, credentials), series)
+
+
+def fetch_metadata_payload(session: requests.Session, series: dict, credentials: dict) -> dict:
+    """Obtiene el JSON para conservar una respuesta incompatible antes de validarla."""
     provider = series["provider"]
     code = series["code"]
 
@@ -30,8 +36,7 @@ def fetch_metadata(session: requests.Session, series: dict, credentials: dict) -
     else:
         raise ValueError("Proveedor de metadatos no soportado.")
 
-    payload = request_json(session, provider, path, params, credentials)
-    return validate_metadata(payload, series)
+    return request_json(session, provider, path, params, credentials)
 
 
 def main(argv=None) -> int:

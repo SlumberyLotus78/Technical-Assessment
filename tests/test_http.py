@@ -68,7 +68,7 @@ class HttpClientTests(unittest.TestCase):
             with self.subTest(status=status):
                 session, response = make_session({"error": CREDENTIALS["FRED_API_KEY"]}, status=status)
                 with self.assertRaises(RuntimeError) as error:
-                    request_json(session, "FRED", "series", {}, CREDENTIALS)
+                    request_json(session, "FRED", "series", {}, CREDENTIALS, max_attempts=1)
 
                 self.assertIn(str(status), str(error.exception))
                 self.assertNotIn(CREDENTIALS["FRED_API_KEY"], str(error.exception))
@@ -83,7 +83,7 @@ class HttpClientTests(unittest.TestCase):
                 # side_effect hace que la llamada simulada lance una excepción.
                 session.get.side_effect = error_type("fixture URL with " + CREDENTIALS["FRED_API_KEY"])
                 with self.assertRaises(RuntimeError) as error:
-                    request_json(session, "FRED", "series", {}, CREDENTIALS)
+                    request_json(session, "FRED", "series", {}, CREDENTIALS, max_attempts=1)
 
                 self.assertNotIn(CREDENTIALS["FRED_API_KEY"], str(error.exception))
                 self.assertTrue(error.exception.__suppress_context__)
