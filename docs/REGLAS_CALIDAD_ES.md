@@ -2,20 +2,19 @@
 
 ## 1. Alcance y estado
 
-Este catálogo relaciona los controles existentes de exploración con las validaciones requeridas para el [modelo de datos](MODELO_DATOS_ES.md). El [perfilamiento inicial](Perfilamiento_inicial.md) acredita los resultados de la muestra, la ejecución y persistencia de controles sobre el histórico completo se implementarán con las cargas.
+Este catálogo relaciona los controles de exploración con las validaciones del [modelo de datos](MODELO_DATOS_ES.md). El [perfilamiento inicial](Perfilamiento_inicial.md) acredita los resultados de la muestra. Los comandos histórico e incremental ejecutan y persisten controles sobre su ventana y sobre el producto completo antes de publicar.
 
 «Implementada en exploración» significa que existe una función de contrato o perfil, verificada con escenarios simulados y aplicada a la muestra real. No acredita todavía integración con PostgreSQL. «Pendiente» identifica un control cuyo mecanismo de carga o publicación falta construir.
 
-La persistencia del perfil genera códigos en `ops.dq_results.rule_code`, vinculados a captura e intento. El histórico inicial integra extracción y publicador, con controles por ventana y del conjunto completo.
-
+La persistencia del perfil genera códigos en `ops.dq_results.rule_code`, vinculados a captura e intento. Ambos coordinadores integran extracción y publicador, con controles por ventana y del conjunto completo. 
 
 ## 2. Fuentes y registros
 
 | Código | Regla | Implementación actual | Condición requerida para cargar |
 |---|---|---|---|
-| `SRC-01` | Proveedor y serie conocidos, identidad coherente con la consulta. | Catálogo, `read_series_record`, `fetch_metadata` y `read_observations`. Implementada en exploración. | Coincidencia de identificadores donde el proveedor los entrega. Contexto de petición y metadatos validados. |
+| `SRC-01` | Proveedor y serie conocidos, identidad coherente con la consulta. | Catálogo, `read_series_record`, `fetch_metadata` y `read_observations`. Implementada en exploración. | Coincidencia de identificadores donde el proveedor los entrega, contexto de petición y metadatos validados. |
 | `SRC-02` | Título, unidad, frecuencia, clasificación y disponibilidad compatibles. | Validación API y del registro archivado, publicación comprueba metadatos y fechas observadas frente a disponibilidad. | Contrato aprobado y rango interpretable. |
-| `SRC-03` | Estructura de observaciones y respuesta completa para la ventana. | Contrato aplicado a cada ventana anual, después de archivar y registrar la respuesta, se repite antes de publicar. | Campos presentes y ausencia de error de fuente, controles FRED de página, unidades y tipo de salida compatibles. |
+| `SRC-03` | Estructura de observaciones y respuesta completa para la ventana. | Contrato aplicado a cada ventana anual, después de archivar y registrar la respuest, se repite antes de publicar. | Campos presentes y ausencia de error de fuente, controles FRED de página, unidades y tipo de salida compatibles. |
 | `DQ-01` | Fechas válidas según el proveedor. | Perfil, preparación Silver y registro de evaluación implementados. | Cero fechas inválidas. |
 | `DQ-02` | Fechas dentro de la ventana solicitada. | Perfil y escritura Silver, se exige además que la captura esté dentro del intervalo del intento. | Cero observaciones fuera de ventana. |
 | `DQ-03` | Valores con formato numérico válido y finito. | Interpretación, preparación Silver y registro de evaluación implementados. | Cero formatos o tipos incompatibles. |
@@ -48,12 +47,14 @@ Los precios, el FIX y las referencias deberán ser finitos y positivos. Las vari
 
 | Código | Regla | Estado | Condición exigida |
 |---|---|---|---|
-| `CTL-01` | Histórico completo antes del primer incremental. | Publicador exige watermark originado por histórico exitoso y verifica el intervalo vigente, comando incremental pendiente. | Watermark creado por un histórico confirmado hasta Gold, con intervalo continuo publicado. |
-| `CTL-02` | Meses cerrados y avance sustentado. | Plan de publicación y comprobaciones completas del intervalo implementados,rechaza huecos y cambios del inicio histórico. | Corte compatible con fuentes y fecha de operación, avance solo por meses con todas las dependencias y controles aprobados. |
+| `CTL-01` | Histórico completo antes del primer incremental. | Coordinador incremental exige watermark válido antes de consultar APIs, publicador y cierre sin trabajo verifican el intervalo vigente. | Watermark creado por un histórico confirmado hasta Gold, con intervalo continuo publicado. |
+| `CTL-02` | Meses cerrados y avance sustentado. | Plan incremental según las cuatro fuentes, corte opcional y revisión de cero a doce meses, validación completa del intervalo, sin huecos ni cambios del inicio histórico. | Corte compatible con fuentes y fecha de operación, avance solo por meses con todas las dependencias y controles aprobados. |
 | `CTL-03` | Publicación atómica. | Commit conjunto y reversión verificados, incluso tras actualizar watermark y éxito. | Silver, Gold, watermark y estado `succeeded` se confirman juntos, ante fallo se conserva el último estado publicado. |
 | `CTL-04` | Publicaciones serializadas y recuperación trazable. | Bloqueo de sesión, diagnóstico durable y cierre de fallos implementados. Recuperación automática de interrupciones pendiente. | Bloqueo del mismo producto y registro durable del intento, sus verificaciones y su eventual fallo. |
 
-Las dos modalidades de carga invocarán las mismas reglas y transformaciones. Cada una tendrá su propio comando y condiciones de inicio. Un incremental sin trabajo podrá registrarse como `skipped`, siempre que haya comprobado su inicialización, y conservará el watermark existente.
+Las dos modalidades invocan las mismas reglas y transformaciones mediante comandos independientes. La revisión incremental predeterminada comprende los últimos tres meses publicados y todos los meses nuevos. Una disponibilidad declarada anterior al avance existente bloquea la ejecución, los metadatos nunca sustituyen la comprobación de las observaciones.
+
+Con revisión desactivada y sin meses seleccionados, el incremental se registra como `skipped` después de comprobar inicialización, disponibilidad del último mes y correspondencia de Silver/Gold con sus capturas. Conserva todos los campos del watermark y los hechos. Una revisión efectivamente ejecutada y aprobada se registra como `succeeded`, incluso con cero escrituras de hechos.
 
 ## 5. Tratamiento de resultados
 
@@ -61,4 +62,4 @@ Los resultados de las reglas serán `passed`, `failed` o `pending`. Un resultado
 
 Los intentos conservarán sus capturas y métricas para explicar el resultado. Los mensajes de error se construirán con identificadores públicos y datos operativos, sin incluir valores de credenciales. Las verificaciones se repetirán al reprocesar datos revisados.
 
-El perfil inicial conserva `DQ-09` pendiente como registro de esa exploración. La [comprobación mensual posterior](evidencias/calendario_gold/vista_previa.json) aprobó la muestra real de septiembre de 2026 en memoria. La [verificación del publicador](evidencias/publicacion_gold/validacion.json) comprobó después las transacciones con datos ficticios. La ejecución histórica real deberá reunir sus propias capturas y recorrer estos controles antes de publicar su intervalo.
+El perfil inicial conserva `DQ-09` pendiente como registro de esa exploración. La [comprobación mensual posterior](evidencias/calendario_gold/vista_previa.json) aprobó la muestra real de septiembre de 2026 en memoria. La [verificación del publicador](evidencias/publicacion_gold/validacion.json) comprobó después las transacciones con datos ficticios. 

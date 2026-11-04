@@ -155,6 +155,19 @@ La integración de PostgreSQL recorrió primero diez casos nuevos con HTTP simul
 
 El caso del intervalo completo realizó 76 llamadas HTTP simuladas y publicó 639 precios ficticios de 100 USD/t y 4,463 FIX ficticios de 20 MXN/USD. Se comprobaron 213 agregados, 639 referencias y 603 variaciones YoY con comparador. Otros casos verificaron fallos de red, metadatos incompatibles, respuestas parciales, cobertura incompleta y rechazo de una segunda inicialización. El comando de terminal también se probó con configuración ficticia y una base desechable.
 
+### 5.5. Coordinador incremental y revisión de publicaciones
+
+Se implementó un comando independiente que exige el watermark histórico antes de consultar las APIs. La planificación combina la disponibilidad de las cuatro series con el último mes cerrado en la zona de operación. La revisión predeterminada comprende los últimos tres meses publicados y todos los meses nuevos, se permite configurarla entre cero y doce y establecer un corte mensual opcional. Una regresión de disponibilidad, la falta de calendario revisado o una cobertura insuficiente bloquean la publicación.
+
+Se trasladaron las funciones de captura a `extraction/captures.py` y las reglas temporales compartidas a `quality/windows.py`. Se separaron las consultas y registros, los artefactos y el cierre de fallos en módulos de orquestación reutilizables. El histórico conservó su interfaz y sus archivos. El incremental no invoca ese coordinador ni inicializa el producto de manera implícita. No se añadieron clases de aplicación, requisitos de instalación ni cambios en el SQL inicial.
+
+La extracción quedó limitada a la ventana seleccionada. El publicador reutiliza Silver validado para reconstruir Gold sobre todo el intervalo y mantener comparadores MoM y YoY exactos. Se actualizan únicamente los valores que cambian. Con revisión desactivada y sin meses seleccionados se comprueban las capturas, Silver y Gold vigentes antes de registrar `skipped`, el watermark y las tablas de hechos permanecen iguales. Una revisión ejecutada puede cerrar `succeeded` con cero escrituras.
+
+La verificación comenzó con los casos específicos de planificación y de ambos coordinadores. Después se ejecutó `tests.run --postgres --report` con la conexión del clúster temporal en el entorno del proceso y una ruta de configuración que no corresponde al `.env` real. La suite completa terminó con **209 pruebas aprobadas: 141 sin servidor y 68 SQL**, sin fallos, errores ni omisiones. El [informe incremental](evidencias/carga_incremental/validacion.json) registra los casos SQL y el alcance de la comprobación.
+
+Las pruebas comprobaron revisiones de granos y FIX, recálculo de variaciones dependientes, recuperación continua de varios meses, cambio de año, cierre sin trabajo, integridad de la publicación previa y reversión después de modificar watermark y éxito. Un caso partió del histórico ficticio 2009-01 a 2026-09 y agregó octubre mediante ocho consultas lógicas, terminando con 5,127 observaciones Silver, 214 medias FIX y 642 referencias Gold. Los datos de esas APIs simuladas fueron valores ficticios, no constituyen una carga real adicional.
+
+El clúster aislado se detuvo al terminar. No se leyó el `.env` real ni se escribió en la base del proyecto. Se actualizó el README en inglés, la documentación del modelo y las guías de ejecución.
 
 ## 6. Estado de las capas y cargas
 

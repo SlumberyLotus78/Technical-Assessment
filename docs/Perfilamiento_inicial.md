@@ -1,7 +1,9 @@
 # Perfilamiento inicial de las fuentes
 
-**Fecha de referencia:** 2026-11-03.  
-**Mes final de la muestra:** septiembre de 2026.  
+**Fecha de referencia:** 2026-11-03.
+
+**Mes final de la muestra:** septiembre de 2026.
+
 
 ## 1. Resultado principal
 
@@ -16,7 +18,7 @@ Las tres series de granos tienen los tres meses esperados. La cobertura diaria d
 | Ejecución | `20261103T215513253606Z_f3eb3f86a0734026aa8761a7d23324f7` |
 | Ubicación operativa | `data/bronze/samples/20261103T215513253606Z_f3eb3f86a0734026aa8761a7d23324f7/` |
 | Momento de las capturas | 2026-11-03, entre 21:55:23 y 21:55:26 UTC. |
-| Estado registrado | `status: completed`; `has_issues: false`. |
+| Estado registrado | `status: completed`, `has_issues: false`. |
 | Archivos examinados | Cuatro capturas de metadatos, cuatro capturas de observaciones y un perfil consolidado. |
 | Evidencia conservada | Copias de los nueve archivos en `docs/evidencias/perfilamiento_inicial/`. |
 
@@ -33,7 +35,7 @@ El [manifiesto de evidencia](evidencias/perfilamiento_inicial/manifest.json) con
 | FRED · Soya · `PSOYBUSDM` | Mensual | USD por tonelada métrica | 1992-01-01 | 2026-09-01 |
 | Banxico · FIX · `SF43718` | Diaria | MXN por USD | 1991-11-12 | 2026-11-03 |
 
-Los campos se contrastaron con el catálogo, en FRED se comprobaron también la identificación, el título y la clasificación `NSA`.En Banxico, la identificación, el componente de determinación FIX y la clasificación `Tipo de Cambio`. Fuentes: capturas de metadatos de [maíz](evidencias/perfilamiento_inicial/fred_PMAIZMTUSDM_metadata.json), [trigo](evidencias/perfilamiento_inicial/fred_PWHEAMTUSDM_metadata.json), [soya](evidencias/perfilamiento_inicial/fred_PSOYBUSDM_metadata.json) y [FIX](evidencias/perfilamiento_inicial/banxico_SF43718_metadata.json).
+Los campos se contrastaron con el catálogo. En FRED se comprobaron también la identificación, el título y la clasificación `NSA`, en Banxico, la identificación, el componente de determinación FIX y la clasificación `Tipo de Cambio`. Fuentes: capturas de metadatos de [maíz](evidencias/perfilamiento_inicial/fred_PMAIZMTUSDM_metadata.json), [trigo](evidencias/perfilamiento_inicial/fred_PWHEAMTUSDM_metadata.json), [soya](evidencias/perfilamiento_inicial/fred_PSOYBUSDM_metadata.json) y [FIX](evidencias/perfilamiento_inicial/banxico_SF43718_metadata.json).
 
 Con fecha de referencia 2026-11-03, octubre era el último mes calendario cerrado. Las tres series FRED declararon septiembre como último periodo disponible, por lo que septiembre delimitó la muestra común. Se consultaron julio–septiembre para los granos y septiembre para FIX, conforme al tamaño de muestra implementado.
 
@@ -46,7 +48,7 @@ Los límites de metadatos describen la disponibilidad declarada. La continuidad 
 | Maíz | 2026-07-01 a 2026-09-30 | 3 | 3 | 2026-07-01 | 2026-09-01 | 3 de 3 meses con valor utilizable. |
 | Trigo | 2026-07-01 a 2026-09-30 | 3 | 3 | 2026-07-01 | 2026-09-01 | 3 de 3 meses con valor utilizable. |
 | Soya | 2026-07-01 a 2026-09-30 | 3 | 3 | 2026-07-01 | 2026-09-01 | 3 de 3 meses con valor utilizable. |
-| FIX | 2026-09-01 a 2026-09-30 | 21 | 21 | 2026-09-01 | 2026-09-30 | 21 fechas distintas; calendario bancario pendiente. |
+| FIX | 2026-09-01 a 2026-09-30 | 21 | 21 | 2026-09-01 | 2026-09-30 | 21 fechas distintas, calendario bancario pendiente. |
 | **Total** | Ventanas de la muestra | **30** | **30** | — | — | Frecuencias evaluadas por separado. |
 
 En las series mensuales, `2026-09-01` identifica el periodo de septiembre. Que la última fecha recibida sea el día uno y la ventana termine el día treinta es coherente con esta representación. `expected_months` es tres y `missing_months` está vacío en los tres perfiles. [Resultados por serie](evidencias/perfilamiento_inicial/profile.json).
@@ -68,12 +70,9 @@ Los 21 registros FIX llegan dentro de septiembre y no repiten fecha. El perfil n
 | Apariciones adicionales de una fecha | 0 | 0 | 0 | 0 | No se detectaron duplicados de fecha por serie. |
 | Meses sin valor utilizable | 0 | 0 | 0 | No aplica | Los tres periodos mensuales están presentes en cada grano. |
 
-La evidencia de estos controles es el [perfil consolidado](evidencias/perfilamiento_inicial/profile.json). El campo `non_month_start_dates` se almacena como cero también en FIX, pero la regla solo se aplica a frecuencia mensual, mientras que aquí se representa como «No aplica». Lo mismo ocurre con la comprobación mensual de cobertura, cuyo `expected_months` es `null` para FIX.
+La evidencia de estos controles es el [perfil consolidado](evidencias/perfilamiento_inicial/profile.json). El campo `non_month_start_dates` se almacena como cero también en FIX, pero la regla solo se aplica a frecuencia mensual, aquí se representa como «No aplica». Lo mismo ocurre con la comprobación mensual de cobertura, cuyo `expected_months` es `null` para FIX.
 
-Los contadores son independientes: 
-Una observación podría acumular varios problemas. 
-
-En esta muestra todos son cero y las cuatro listas recibidas tienen registros. Por ello `has_issues` es falso tanto por serie como en el consolidado. Las funciones de perfil describen los datos y no los corrigen ni completan.
+Los contadores son independientes: una observación podría acumular varios problemas. En esta muestra todos son cero y las cuatro listas recibidas tienen registros. Por ello `has_issues` es falso tanto por serie como en el consolidado. Las funciones de perfil describen los datos y no los corrigen ni completan.
 
 ## 6. Rangos numéricos y precisión
 
@@ -86,7 +85,7 @@ En esta muestra todos son cero y las cuatro listas recibidas tienen registros. P
 
 Los extremos coinciden con `value_min` y `value_max` del perfil. Sus fechas se obtuvieron de los registros de las cuatro capturas de observaciones vinculadas arriba. Se conservan todos los decimales recibidos, incluido el cero final de `18.0710`.
 
-Los valores FRED de esta muestra llegan hasta 13 posiciones decimales en cada serie; los de FIX tienen cuatro. Esta diferencia sustenta la conservación de precisión decimal en el almacenamiento y el tratamiento de cada unidad por separado. Los rangos describen únicamente los periodos consultados y no constituyen límites de aceptación para todo el histórico.
+Los valores FRED de esta muestra llegan hasta 13 posiciones decimales en cada serie, los de FIX tienen cuatro. Esta diferencia sustenta la conservación de precisión decimal en el almacenamiento y el tratamiento de cada unidad por separado. Los rangos describen únicamente los periodos consultados y no constituyen límites de aceptación para todo el histórico.
 
 ## 7. Alcance de los hallazgos y continuidad
 
@@ -95,7 +94,7 @@ Los resultados acreditan que las cuatro fuentes entregaron observaciones con est
 Quedan tres límites relevantes para las siguientes etapas:
 
 - **Cobertura FIX:** se debe contrastar el conjunto de fechas con el calendario hábil bancario antes de acreditar un mes completo.
-- **Alcance temporal:** el histórico fuera de julio–septiembre de 2026 todavía no fue perfilado en este avance y el FIX de la muestra solo corresponde a septiembre.
+- **Alcance temporal:** el histórico fuera de julio–septiembre de 2026 todavía no fue perfilado en este avance, el FIX de la muestra solo corresponde a septiembre.
 - **Integración analítica:** para integrar los tres meses de granos será necesario disponer también del FIX de julio y agosto, completar su validación y definir la agregación mensual. Esta ejecución conserva las unidades originales y aún no produce referencias Gold en pesos.
 
 El perfil del periodo histórico seleccionado ampliará esta evidencia y permitirá comprobar continuidad, duplicados, ausentes y revisiones a una escala mayor. El seguimiento de esa implementación se registrará en [Proceso de implementación](Implementación_proceso.md).

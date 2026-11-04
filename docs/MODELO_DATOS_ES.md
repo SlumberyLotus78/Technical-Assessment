@@ -2,9 +2,9 @@
 
 ## 1. Estado y fundamento
 
-El histórico inicial conecta extracción, perfil y publicación hasta Gold y se verificó con HTTP simulado y PostgreSQL aislado. El incremental se conectará por separado a las funciones compartidas.
+Se confirmó la preparación de su base y la ejecución histórica real con los resultados esperados. El histórico y el incremental conectan extracción, perfil y publicación hasta Gold mediante comandos independientes. Ambos se verificaron con HTTP simulado y PostgreSQL aislado.
 
-El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX. Una validación posterior de calendario y Gold certificó el FIX de septiembre de 2026 y calculó sus tres referencias. La publicación se verificó después en bases desechable, la ejecución histórica completa con fuentes reales permanece pendiente.
+El diseño se apoya en el [perfilamiento inicial](Perfilamiento_inicial.md): cuatro series identificadas, nueve precios mensuales y 21 registros FIX diarios, fechas únicas por serie y valores con hasta 13 posiciones decimales en FRED y cuatro en FIX.La confirmación del histórico real se registra en la bitácora, separada de las evidencias de pruebas simuladas.
 
 El detalle de campos se encuentra en el [diccionario de datos](DICCIONARIO_DATOS_ES.md) y los controles se especifican en el [catálogo de calidad](REGLAS_CALIDAD_ES.md).
 
@@ -20,7 +20,7 @@ El detalle de campos se encuentra en el [diccionario de datos](DICCIONARIO_DATOS
 | Control | `ops.runs`, `ops.dq_results`, `ops.watermarks` | Una ejecución, sus verificaciones y el avance publicado del producto. |
 | Versión SQL | `ops.schema_migrations` | Una versión del esquema aplicada, control técnico adicional a las ocho entidades del modelo. |
 
-Bronze conserva el contenido de origen en archivos. El registro de capturas en PostgreSQL permitirá localizar cada archivo y verificar su integridad. Silver contiene valores tipados y validados. Gold relaciona las frecuencias mediante el mes. Los esquemas organizan las tablas por función, las carpetas Python continuarán separando consulta, reglas, transformación, persistencia y coordinación.
+Bronze conserva el contenido de origen en archivos. El registro de capturas en PostgreSQL permitirá localizar cada archivo y verificar su integridad. Silver contiene valores tipados y validados. Gold relaciona las frecuencias mediante el mes. Los esquemas organizan las tablas por función las carpetas Python continuarán separando consulta, reglas, transformación, persistencia y coordinación.
 
 ```mermaid
 erDiagram
@@ -43,9 +43,9 @@ La clave de `core.series` será `(provider, series_code)`. La clave de `core.obs
 
 Por ejemplo, `FRED / PMAIZMTUSDM / 2026-09-01` identifica una sola observación mensual de maíz. Una segunda extracción de ese registro deberá actualizar la misma fila si cambió su valor. Si el valor permanece igual, la fila vigente se conservará. El intento y su captura se registrarán de todas formas en `ops`.
 
-Se mantendrán la ejecución y el instante de creación de la fila, y la ejecución, captura e instante de su última modificación. Las capturas previas conservarán la evidencia de valores anteriores. La tabla Silver representará el estado vigente y la reconstrucción de versiones anteriores utilizará Bronze y los registros operativos.
+Se mantendrán la ejecución y el instante de creación de la fila, y la ejecución, captura e instante de su última modificación. Las capturas previas conservarán la evidencia de valores anteriores. La tabla Silver representará el estado vigente, la reconstrucción de versiones anteriores utilizará Bronze y los registros operativos.
 
-La función de escritura Silver ya aplica esta regla mediante una actualización condicionada al cambio del valor. Verifica catálogo, captura, hash, contexto e intervalo del intento antes de preparar y escribir. La [guía de persistencia Silver](GUIA_PERSISTENCIA_SILVER_ES.md) detalla las comprobaciones y los límites transaccionales.
+La función de escritura Silver ya aplica esta regla mediante una actualización condicionada al cambio del valor. Verifica catálogo, captura, hash, contexto e intervalo del intento antes de preparar y escribir.
 
 Las claves primarias evitan duplicados y las claves foráneas relacionan observaciones, catálogo y procedencia. Esas claves y las restricciones de fila están implementadas en el SQL inicial. Las reglas que requieren comparar conjuntos o consultar otras tablas se ejecutarán en la carga. [Restricciones de PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html).
 
@@ -57,8 +57,6 @@ Los instantes de captura, carga y ejecución utilizarán `TIMESTAMPTZ`. Se regis
 
 Los valores de origen se almacenarán como `NUMERIC` sin una escala declarada que fuerce su redondeo. La validación exigirá números finitos y positivos. Esta elección conserva la precisión capturada y evita limitar el histórico a los decimales de la muestra. [Tipos numéricos de PostgreSQL](https://www.postgresql.org/docs/current/datatype-numeric.html).
 
-Para las transformaciones se define un contexto decimal de 34 dígitos significativos y redondeo `ROUND_HALF_EVEN`. La media FIX se calculará primero y la referencia utilizará esa media almacenada. Las comparaciones DQ repetirán la misma política. El redondeo para presentación se aplicará al mostrar resultados. Esta política se implementará y verificará al construir las transformaciones, mediante un contexto local que restaure el entorno de cálculo al terminar. [Contextos decimales de Python](https://docs.python.org/3.12/library/decimal.html#context-objects).
-
 Las transformaciones implementan un contexto decimal de 34 dígitos significativos y redondeo `ROUND_HALF_EVEN`. La media FIX se calcula primero y la referencia utiliza esa misma media. Las comparaciones DQ repetirán la misma política. El redondeo para presentación se aplica al mostrar resultados. Se verificó que el contexto local restaura el entorno del llamador y que la configuración decimal externa no modifica los resultados. [Contextos decimales de Python](https://docs.python.org/3.12/library/decimal.html#context-objects).
 
 ## 5. Integración mensual y resultados Gold
@@ -66,7 +64,6 @@ Las transformaciones implementan un contexto decimal de 34 dígitos significativ
 Para cada mes, el conjunto de fechas FIX válidas deberá coincidir con el calendario hábil bancario aplicable. Se conservarán el número observado, el esperado y una referencia a la evidencia del calendario. Las coincidencias de conteo por sí solas no sustituyen la comparación de fechas.
 
 La lectura anual, la comparación y el agregado están implementados en módulos separados. Las referencias incorporadas cubren 2009–2026, con versión, SHA-256 y procedencia documentada. Un año sin recurso revisado impide el histórico y el agregado. La persistencia escribe los resultados en la transacción de publicación y conserva filas y auditoría cuando sus valores no cambian.
-
 
 La convención analítica será la media aritmética de los valores FIX diarios válidos de ese mes:
 
@@ -92,7 +89,7 @@ Una revisión de un mes obliga a recalcular sus resultados dependientes. La impl
 
 `ops.runs` identificará cada intento histórico o incremental, su etapa y su estado. El diagnóstico de muestras continuará siendo un comando separado, sus archivos existentes son evidencia de exploración y no inicializan el control de producción.
 
-Los estados de ejecución serán `running`, `succeeded`, `failed` y `skipped`. `succeeded` requiere una publicación confirmada, `skipped` permitirá registrar un incremental sin trabajo después de comprobar que existe una carga inicial válida. Una ejecución que queda en `running` tras una interrupción requerirá revisión de recuperación.
+Los estados de ejecución son `running`, `succeeded`, `failed` y `skipped`. `succeeded` requiere una publicación confirmada. `skipped` registra un incremental sin ventana seleccionada y con revisión desactivada, después de comprobar el histórico, la disponibilidad declarada de su último mes y la integridad Silver/Gold. Se conserva en `planning` con intervalo nulo y no modifica el watermark. Una ejecución que queda en `running` tras una interrupción requiere revisión de recuperación.
 
 `ops.raw_captures` registrará la ruta, el SHA-256 y el contexto de cada captura. La observación publicada deberá corresponder a una captura de observaciones de la misma serie. El hash verificará la integridad del archivo usado al procesar o reconstruir datos.
 
@@ -102,13 +99,13 @@ Los estados de ejecución serán `running`, `succeeded`, `failed` y `skipped`. `
 
 Se define un watermark común al producto `grain_reference_mxn`. Su intervalo irá desde `start_month` hasta `published_through_month`, ambos identificados con el primer día del mes. Cada mes incluido deberá tener los tres granos, el FIX certificado y sus referencias Gold. Los resultados DQ y las capturas mantendrán el detalle por fuente.
 
-La primera fila de watermark se creará únicamente cuando termine satisfactoriamente una carga histórica hasta Gold. El incremental exigirá esa inicialización y a partir de ella determinará los meses nuevos. La revisión de periodos anteriores utilizará un solapamiento explícito cuyo alcance se fijará al implementar el incremental. Las correcciones más antiguas requerirán un reproceso explícito.
+La primera fila de watermark se crea únicamente cuando termina satisfactoriamente una carga histórica hasta Gold. El incremental exige esa inicialización y determina los meses nuevos desde el avance publicado. Incluye por defecto los últimos tres meses publicados para detectar revisiones, `--review-months` permite seleccionar entre cero y doce. El mes candidato debe estar cerrado y declarado por todas las fuentes. `--end-month` permite limitarlo sin retroceder antes del watermark. Las correcciones anteriores a la revisión seleccionada requieren un reproceso explícito.
 
 La actualización de Silver, Gold, watermark y estado de éxito pertenece a una misma transacción de publicación. Se verificaron la visibilidad desde otra sesión y la reversión tras fallos posteriores a las escrituras. [Transacciones de PostgreSQL](https://www.postgresql.org/docs/current/tutorial-transactions.html).
 
 El registro inicial del intento, sus capturas y sus resultados DQ se confirmarán antes y fuera de esa transacción, para conservar el diagnóstico cuando una publicación falle. Después de un fallo se revertirá la publicación y se registrará el error en una transacción separada. Los archivos Bronze permanecerán disponibles.
 
-Las publicaciones del mismo producto se serializan mediante un bloqueo de sesión que permanece adquirido entre transacciones. El coordinador histórico mantiene ese ámbito desde la planificación y deja la conexión SQL sin transacción abierta durante las peticiones HTTP. La contención se rechaza sin espera indefinida. Se comprobaron su duración y su liberación ante errores.
+Las publicaciones del mismo producto se serializan mediante un bloqueo de sesión que permanece adquirido entre transacciones. Ambos coordinadores mantienen ese ámbito desde la planificación y dejan la conexión SQL sin transacción abierta durante las peticiones HTTP. La contención se rechaza sin espera indefinida. Se comprobaron su duración y su liberación ante errores.
 
 Un reproceso de un intervalo ya publicado conservará los límites vigentes y actualizará los resultados afectados. Cualquier ampliación del intervalo deberá mantener continuidad. El watermark no retrocederá ni avanzará por recibir metadatos o completar únicamente Silver.
 
@@ -120,6 +117,6 @@ Un reproceso de un intervalo ya publicado conservará los límites vigentes y ac
 | Incremental | Watermark inicializado, meses nuevos y revisión delimitada de periodos anteriores. | Actualización hasta Gold, sin duplicados y con avance confirmado únicamente al publicar. |
 | Reproceso histórico | Intervalo explícito y validación completa de sus dependencias. | Corrección de filas y recálculo de Gold, conservando la evidencia y la continuidad del intervalo publicado. |
 
+Ambas cargas reutilizan extracción, calidad, transformación y persistencia mediante coordinadores independientes. El histórico inicial exige ausencia de watermark y recibe sus meses explícitos. Se eligió 2009-01 a 2026-09, sus referencias bancarias están incorporadas. El incremental consulta únicamente su ventana de revisión y meses nuevos, y utiliza todo Silver validado para reconstruir Gold y sus comparadores. Los reprocesos del publicador son una capacidad de biblioteca distinta del comando histórico inicial.
 
-Ambas cargas reutilizarán extracción, calidad, transformación y persistencia mediante coordinadores independientes. El histórico inicial exige ausencia de watermark y recibe sus meses explícitos. Se eligió 2009-01 a 2026-09, sus referencias bancarias están incorporadas. Los reprocesos del publicador son una capacidad de biblioteca distinta de este comando inicial.
-
+Las evidencias de las etapas previas conservan sus resultados originales. La ampliación incremental alcanzó [209 pruebas aprobadas, incluidas 68 SQL](evidencias/carga_incremental/validacion.json), sin omisiones.
