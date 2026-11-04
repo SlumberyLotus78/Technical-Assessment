@@ -224,3 +224,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.env.*
+!.env.example
+.venv-automation/
+/dist/
+/build/
+/*.egg-info/
+/data/

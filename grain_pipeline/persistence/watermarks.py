@@ -15,12 +15,12 @@ from grain_pipeline.transformations.gold import build_monthly_gold
 PRODUCT_NAME = "grain_reference_mxn"
 
 
-def read_watermark(connection: psycopg.Connection) -> dict | None:
+def read_watermark(connection: psycopg.Connection, *, for_update: bool = True) -> dict | None:
     """Comprueba que el avance proceda de un histórico y de publicaciones exitosas."""
     fields = ("start_month", "published_through_month", "initial_run_id", "last_run_id", "updated_at")
     row = connection.execute(
         """SELECT start_month, published_through_month, initial_run_id, last_run_id, updated_at
-           FROM ops.watermarks WHERE pipeline_name = %s FOR UPDATE""", (PRODUCT_NAME,)).fetchone()
+           FROM ops.watermarks WHERE pipeline_name = %s""" + (" FOR UPDATE" if for_update else ""), (PRODUCT_NAME,)).fetchone()
     if row is None:
         return None
     state = dict(zip(fields, row))

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools==84.2.1", "wheel==0.47.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grain-pipeline"
+version = "1.0.0"
+description = "FRED and Banxico monthly grain references with independent loads and auditable publication"
+readme = "README.MD"
+requires-python = ">=3.12"
+dependencies = [
+    "requests==2.34.2",
+    "python-dotenv==1.2.4",
+    "tzdata==2026.6",
+    "psycopg[binary]==3.3.7",
+]
+
+[project.optional-dependencies]
+dashboard = ["streamlit==1.66.1", "plotly==7.1.0"]
+
+[project.scripts]
+grain-historical = "grain_pipeline.orchestration.historical:main"
+grain-incremental = "grain_pipeline.orchestration.incremental:main"
+grain-reprocess = "grain_pipeline.orchestration.reprocess:main"
+grain-recover = "grain_pipeline.orchestration.recovery:main"
+grain-initialize = "grain_pipeline.persistence.initialize:main"
+grain-state = "grain_pipeline.orchestration.state:main"
+grain-scheduled = "grain_pipeline.orchestration.scheduled:main"
+grain-dashboard = "app.launcher:main"
+
+[tool.setuptools.packages.find]
+include = ["grain_pipeline*", "app*"]
+exclude = ["tests*", "docs*", "scripts*"]
+
+[tool.setuptools.package-data]
+"grain_pipeline.persistence.sql" = ["*.sql"]
+"grain_pipeline.sources.calendars" = ["*.json"]

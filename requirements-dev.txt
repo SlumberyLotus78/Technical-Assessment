@@ -1,0 +1,5 @@
+# Herramientas de construcción; no forman parte del proceso programado.
+-r requirements.txt
+build==1.4.4
+setuptools==84.2.1
+wheel==0.47.0
