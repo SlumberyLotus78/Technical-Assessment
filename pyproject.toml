@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 dependencies = [
     "requests==2.34.2",
     "python-dotenv==1.2.4",
+    "cryptography==50.0.2",
     "tzdata==2026.6",
     "psycopg[binary]==3.3.7",
 ]

@@ -27,7 +27,7 @@ The commands below use Windows PowerShell. Run them from the directory containin
 | FRED | Soybeans | [PSOYBUSDM](https://fred.stlouisfed.org/series/PSOYBUSDM) | USD per metric ton | Monthly |
 | Banco de México | FIX exchange rate | SF43718 | MXN per USD | Daily |
 
-Obtain a [FRED API key](https://fred.stlouisfed.org/docs/api/api_key.html) and a [Banco de México API token](https://www.banxico.org.mx/SieAPIRest/service/v1/token) before querying the sources.
+FRED and Banco de México API credentials are supplied in `credentials.encrypted.json`. Request the decryption password directly from the project owner before setup.
 
 ## Setup
 
@@ -68,25 +68,26 @@ If you choose another database name, use that same name in `DATABASE_URL`.
 
 ### 3. Configure Private Credentials
 
-Create the local configuration file if it does not exist:
+Decrypt the supplied API credentials. This is a required setup step, the project owner sends you the password separately:
 
 ```powershell
-if (-not (Test-Path -LiteralPath .env)) {
-    Copy-Item -LiteralPath .env.example -Destination .env
-}
+.\.venv\Scripts\python.exe -m scripts.api_credentials
 ```
 
-Fill in `.env` with your credentials:
+Enter the password at the hidden terminal prompt. The script creates `.env` from
+`.env.example` if needed and writes the decrypted FRED and Banxico credentials.
+It preserves other existing settings. Then edit the PostgreSQL connection
+in your local `.env`:
 
 ```dotenv
-FRED_API_KEY=YOUR_FRED_API_KEY
-BANXICO_TOKEN=YOUR_BANXICO_TOKEN
 DATABASE_URL=postgresql://admin:YOUR_PASSWORD@localhost:5432/fred_banxico
 ```
 
 Use your actual host, port, login role, password, and database name. Reserved characters in a URL password must be percent-encoded. Process environment variables take precedence over values in `.env`.
 
 The configuration template is tracked in Git. The private `.env` file is excluded through `.gitignore`.
+
+See the [credential setup guide](docs/CREDENCIALES_CIFRADAS_ES.md) for details.
 
 ### 4. Initialize and Verify the Database
 
